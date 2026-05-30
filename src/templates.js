@@ -7,10 +7,10 @@
 //  Preencha uma única vez aqui. O app reaproveita em toda geração.
 // -----------------------------------------------------------------------------
 export const CONTRATADO = {
-  nome: 'SEU NOME COMPLETO OU RAZÃO SOCIAL',
-  documento: '000.000.000-00', // CPF ou CNPJ
-  endereco: 'Rua Exemplo, nº 000, Bairro, Cidade - UF, CEP 00000-000',
-  mei: true, // true = sou MEI (Microempreendedor Individual)
+  nome: 'Leandro Morais Lemos',
+  documento: '016.234.906-85', // CPF ou CNPJ
+  endereco: 'Rua Manoel Gonzalves de Araújo, nº 52, Jardim América, Sacramento - MG, CEP 38190-000',
+  mei: false, // true = sou MEI (Microempreendedor Individual)
   emiteNotaFiscal: true, // true = emito nota fiscal de serviço
 }
 
@@ -18,8 +18,8 @@ export const CONTRATADO = {
 //  Identidade visual / textos da marca usados na PROPOSTA e no cabeçalho.
 // -----------------------------------------------------------------------------
 export const MARCA = {
-  nomeNegocio: 'Especialista em CRM & Automação',
-  slogan: 'Implantação completa do seu CRM, automações e acompanhamento.',
+  nomeNegocio: 'SmartFlux',
+  slogan: 'Automação inteligente para empresas',
 }
 
 // =============================================================================
