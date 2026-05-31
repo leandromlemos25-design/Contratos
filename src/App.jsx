@@ -185,12 +185,16 @@ export default function App() {
       <header className="no-print sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 font-bold text-white">
-              P
-            </div>
-            <div>
-              <p className="text-sm font-semibold leading-tight">Proposta &amp; Contrato</p>
-              <p className="text-xs leading-tight text-slate-500">{MARCA.nomeNegocio}</p>
+            {MARCA.logo ? (
+              <img src={MARCA.logo} alt={MARCA.nomeNegocio} className="h-11 w-auto" />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 font-bold text-white">
+                S
+              </div>
+            )}
+            <div className="leading-tight">
+              <p className="text-sm font-semibold">Proposta &amp; Contrato</p>
+              <p className="text-xs text-slate-500">{MARCA.nomeNegocio}</p>
             </div>
           </div>
           <span className="hidden rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 sm:inline">
@@ -380,9 +384,19 @@ export default function App() {
 /* =========================================================================
    Visualização da PROPOSTA
    ========================================================================= */
+function LogoDoc() {
+  if (!MARCA.logo) return null
+  return (
+    <div className="mb-4 flex justify-center">
+      <img src={MARCA.logo} alt={MARCA.nomeNegocio} className="h-20 w-auto" />
+    </div>
+  )
+}
+
 function PropostaView({ doc }) {
   return (
     <div className="doc-paper text-slate-800" style={{ whiteSpace: 'normal' }}>
+      <LogoDoc />
       <div className="mb-6 border-b border-slate-200 pb-4">
         <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">
           Proposta comercial
@@ -450,7 +464,12 @@ function LinhaValor({ label, valor }) {
    Visualização do CONTRATO
    ========================================================================= */
 function ContratoView({ doc }) {
-  return <div className="doc-paper text-[15px] text-slate-800">{doc.texto}</div>
+  return (
+    <div className="text-[15px] text-slate-800">
+      <LogoDoc />
+      <div className="doc-paper">{doc.texto}</div>
+    </div>
+  )
 }
 
 /* =========================================================================
