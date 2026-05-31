@@ -75,6 +75,12 @@ automaticamente.
   manual — dados de pessoa física são protegidos e não há API pública.
 - Se a consulta falhar ou o CNPJ não existir, o app avisa e mantém o preenchimento manual.
 
+### Busca de endereço por CEP
+
+Há também um campo **CEP** que preenche o endereço do contratante via BrasilAPI
+(rua, bairro, cidade - UF, CEP). Útil principalmente para **pessoa física (CPF)**,
+onde o CNPJ não ajuda. O **número e o complemento** você adiciona à mão no endereço.
+
 ## Lógica da mensalidade (automática nos dois documentos)
 
 - **Mensalidade em branco ou 0** → "Contrato SEM mensalidade".

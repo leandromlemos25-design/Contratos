@@ -38,6 +38,9 @@ export default function App() {
   const [erroIa, setErroIa] = useState('')
   const [buscandoCnpj, setBuscandoCnpj] = useState(false)
   const [cnpjMsg, setCnpjMsg] = useState(null) // { texto, erro } | null
+  const [cepInput, setCepInput] = useState('')
+  const [buscandoCep, setBuscandoCep] = useState(false)
+  const [cepMsg, setCepMsg] = useState(null) // { texto, erro } | null
   const printRef = useRef(null)
   const camposContratoRef = useRef(null)
 
@@ -212,6 +215,40 @@ export default function App() {
     }
   }
 
+  // ----- Buscar endereço pelo CEP (BrasilAPI, grátis, sem chave) -----
+  async function buscarCep() {
+    if (buscandoCep) return
+    const d = soDigitos(cepInput)
+    if (d.length !== 8) {
+      setCepMsg({ texto: 'Digite um CEP válido (8 dígitos).', erro: true })
+      return
+    }
+    setBuscandoCep(true)
+    setCepMsg(null)
+    try {
+      const r = await fetch(`https://brasilapi.com.br/api/cep/v1/${d}`)
+      if (r.status === 404) throw new Error('CEP não encontrado.')
+      if (!r.ok) throw new Error('Não foi possível consultar agora. Tente novamente.')
+      const c = await r.json()
+
+      const endereco = [
+        (c.street || '').trim(),
+        (c.neighborhood || '').trim(),
+        `${c.city || ''}${c.state ? ' - ' + c.state : ''}`.trim(),
+        `CEP ${formatarCep(d)}`,
+      ]
+        .filter(Boolean)
+        .join(', ')
+
+      setForm((f) => ({ ...f, contratanteEndereco: endereco }))
+      setCepMsg({ texto: 'Endereço preenchido. Adicione o número e o complemento.', erro: false })
+    } catch (e) {
+      setCepMsg({ texto: e?.message || 'Falha na consulta.', erro: true })
+    } finally {
+      setBuscandoCep(false)
+    }
+  }
+
   // ----- Melhorar observações com IA -----
   async function melhorarObservacoes() {
     const texto = form.observacoes.trim()
@@ -375,6 +412,34 @@ export default function App() {
                       <input className={inputCls} value={form.foroCidade} onChange={set('foroCidade')} placeholder="Ex.: São Paulo - SP" />
                     </Field>
                   </div>
+                  <div>
+                    <span className="mb-1 block text-sm font-medium text-slate-700">
+                      CEP <span className="font-normal text-slate-400">(preenche o endereço)</span>
+                    </span>
+                    <div className="flex gap-2">
+                      <input
+                        className={inputCls}
+                        value={cepInput}
+                        onChange={(e) => setCepInput(e.target.value)}
+                        placeholder="00000-000"
+                        inputMode="numeric"
+                      />
+                      <button
+                        type="button"
+                        onClick={buscarCep}
+                        disabled={buscandoCep}
+                        className="shrink-0 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {buscandoCep ? '…' : 'Buscar'}
+                      </button>
+                    </div>
+                    {cepMsg && (
+                      <p className={`mt-1 text-xs ${cepMsg.erro ? 'text-rose-600' : 'text-emerald-600'}`}>
+                        {cepMsg.texto}
+                      </p>
+                    )}
+                  </div>
+
                   <Field label="Endereço completo do contratante">
                     <input className={inputCls} value={form.contratanteEndereco} onChange={set('contratanteEndereco')} placeholder="Rua, nº, bairro, cidade - UF, CEP" />
                   </Field>
