@@ -24,9 +24,18 @@ const FORM_INICIAL = {
   contratanteNome: '',
   contratanteDoc: '',
   contratanteEndereco: '',
-  vigencia: '',
+  vigencia: '', // prazo de implantação
   formaPagamento: '',
   foroCidade: '',
+  // Condições do contrato (já vêm com padrões editáveis)
+  escopoServico:
+    'implantação e configuração da plataforma, parametrização de funis e etapas de vendas, e desenvolvimento das automações de processos comerciais combinadas',
+  periodoLicenca: '12 (doze) meses',
+  prazoAceite: '7 (sete) dias',
+  diasAtraso: '10 (dez)',
+  avisoPrevio: '30 (trinta) dias',
+  prazoSanar: '10 (dez) dias',
+  multa: '20% (vinte por cento) sobre o valor da implantação',
 }
 
 export default function App() {
@@ -110,20 +119,6 @@ export default function App() {
       return
     }
 
-    const regime =
-      CONTRATADO.mei || CONTRATADO.emiteNotaFiscal
-        ? `${[
-            CONTRATADO.mei ? 'na qualidade de Microempreendedor Individual (MEI)' : '',
-            CONTRATADO.emiteNotaFiscal ? 'emitente de nota fiscal de serviço' : '',
-          ]
-            .filter(Boolean)
-            .join(' e ')}, `
-        : ''
-
-    const nota = CONTRATADO.emiteNotaFiscal
-      ? 'O CONTRATADO emitirá a respectiva nota fiscal de serviço referente aos valores recebidos.'
-      : 'Os valores serão comprovados mediante recibo emitido pelo CONTRATADO.'
-
     const vars = {
       CONTRATANTE_NOME: form.contratanteNome.trim() || '[NOME / RAZÃO SOCIAL DO CONTRATANTE]',
       CONTRATANTE_DOC: form.contratanteDoc.trim() || '[CPF/CNPJ]',
@@ -131,14 +126,19 @@ export default function App() {
       CONTRATADO_NOME: CONTRATADO.nome,
       CONTRATADO_DOC: CONTRATADO.documento,
       CONTRATADO_ENDERECO: CONTRATADO.endereco,
-      CONTRATADO_REGIME: regime,
-      CONTRATADO_NOTA: nota,
       VALOR_LICENCA: formatBRL(licenca),
       VALOR_IMPLANTACAO: formatBRL(implantacao),
       TOTAL_INICIAL: formatBRL(totalInicial),
       VALOR_MENSALIDADE: formatBRL(mensalidade),
+      ESCOPO: form.escopoServico.trim() || '[ESCOPO DOS SERVIÇOS]',
       FORMA_PAGAMENTO: form.formaPagamento.trim() || '[FORMA DE PAGAMENTO]',
-      VIGENCIA: form.vigencia.trim() || '[PRAZO / VIGÊNCIA]',
+      DIAS_ATRASO: form.diasAtraso.trim() || '10 (dez)',
+      PRAZO_IMPLANTACAO: form.vigencia.trim() || '[PRAZO DE IMPLANTAÇÃO]',
+      PRAZO_ACEITE: form.prazoAceite.trim() || '7 (sete) dias',
+      PERIODO_LICENCA: form.periodoLicenca.trim() || '12 (doze) meses',
+      AVISO_PREVIO: form.avisoPrevio.trim() || '30 (trinta) dias',
+      PRAZO_SANAR: form.prazoSanar.trim() || '10 (dez) dias',
+      MULTA: form.multa.trim() || '20% (vinte por cento) sobre o valor da implantação',
       FORO_CIDADE: form.foroCidade.trim() || '[CIDADE DO FORO]',
       DATA_EXTENSO: dataPorExtenso(),
     }
@@ -527,12 +527,13 @@ export default function App() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             {MARCA.logo && (
-              <img src={MARCA.logo} alt="" className="h-10 w-auto" />
+              <img
+                src={MARCA.logo}
+                alt={MARCA.nomeNegocio}
+                className="h-11 w-auto rounded-md"
+              />
             )}
-            <div className="leading-tight">
-              <p className="text-base font-bold text-[#0a47a4]">{MARCA.nomeNegocio}</p>
-              <p className="text-xs text-slate-500">Proposta &amp; Contrato</p>
-            </div>
+            <p className="hidden text-sm text-slate-500 sm:block">Proposta &amp; Contrato</p>
           </div>
           <div className="flex items-center gap-2">
             {autenticado ? (
@@ -698,12 +699,47 @@ export default function App() {
                   <Field label="Endereço completo do contratante">
                     <input className={inputCls} value={form.contratanteEndereco} onChange={set('contratanteEndereco')} placeholder="Rua, nº, bairro, cidade - UF, CEP" />
                   </Field>
-                  <Field label="Vigência / prazo de entrega">
-                    <input className={inputCls} value={form.vigencia} onChange={set('vigencia')} placeholder="Ex.: 30 (trinta) dias úteis" />
+                  <Field label="Escopo dos serviços">
+                    <textarea className={`${inputCls} min-h-[70px] resize-y`} value={form.escopoServico} onChange={set('escopoServico')} placeholder="O que está incluído na implantação e nas automações" />
                   </Field>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Prazo de implantação">
+                      <input className={inputCls} value={form.vigencia} onChange={set('vigencia')} placeholder="Ex.: 30 (trinta) dias úteis" />
+                    </Field>
+                    <Field label="Período inicial da licença">
+                      <input className={inputCls} value={form.periodoLicenca} onChange={set('periodoLicenca')} />
+                    </Field>
+                  </div>
                   <Field label="Forma de pagamento">
                     <input className={inputCls} value={form.formaPagamento} onChange={set('formaPagamento')} placeholder="Ex.: 50% na assinatura e 50% na entrega, via PIX" />
                   </Field>
+
+                  <details className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <summary className="cursor-pointer text-sm font-medium text-slate-600">
+                      Condições jurídicas (já preenchidas — edite se quiser)
+                    </summary>
+                    <div className="mt-3 grid gap-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Field label="Prazo para aceite da entrega">
+                          <input className={inputCls} value={form.prazoAceite} onChange={set('prazoAceite')} />
+                        </Field>
+                        <Field label="Dias de atraso p/ suspensão">
+                          <input className={inputCls} value={form.diasAtraso} onChange={set('diasAtraso')} />
+                        </Field>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Field label="Aviso prévio de rescisão">
+                          <input className={inputCls} value={form.avisoPrevio} onChange={set('avisoPrevio')} />
+                        </Field>
+                        <Field label="Prazo p/ sanar descumprimento">
+                          <input className={inputCls} value={form.prazoSanar} onChange={set('prazoSanar')} />
+                        </Field>
+                      </div>
+                      <Field label="Multa por descumprimento">
+                        <input className={inputCls} value={form.multa} onChange={set('multa')} />
+                      </Field>
+                    </div>
+                  </details>
                 </div>
               )}
             </Card>
@@ -939,15 +975,14 @@ function Modal({ titulo, children, onClose, largo }) {
    Visualização da PROPOSTA
    ========================================================================= */
 function LogoDoc() {
+  if (!MARCA.logo) return null
   return (
-    <div className="mb-6 flex items-center justify-center gap-3 border-b border-slate-200 pb-4">
-      {MARCA.logo && (
-        <img src={MARCA.logo} alt="" className="h-14 w-auto" />
-      )}
-      <div className="text-left leading-tight">
-        <p className="text-2xl font-bold text-[#0a47a4]">{MARCA.nomeNegocio}</p>
-        <p className="text-xs text-slate-500">{MARCA.slogan}</p>
-      </div>
+    <div className="mb-6 overflow-hidden rounded-xl">
+      <img
+        src={MARCA.logo}
+        alt={`${MARCA.nomeNegocio} — ${MARCA.slogan}`}
+        className="block w-full"
+      />
     </div>
   )
 }
