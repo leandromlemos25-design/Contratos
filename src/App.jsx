@@ -6,6 +6,9 @@ import {
   dataPorExtenso,
   temMensalidade,
   renderTemplate,
+  soDigitos,
+  formatarCnpj,
+  formatarCep,
 } from './lib.js'
 
 // Estado inicial do formulário.
@@ -33,6 +36,8 @@ export default function App() {
   const [copiado, setCopiado] = useState(false)
   const [melhorando, setMelhorando] = useState(false)
   const [erroIa, setErroIa] = useState('')
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false)
+  const [cnpjMsg, setCnpjMsg] = useState(null) // { texto, erro } | null
   const printRef = useRef(null)
   const camposContratoRef = useRef(null)
 
@@ -152,6 +157,59 @@ export default function App() {
 
   function imprimir() {
     window.print()
+  }
+
+  // ----- Buscar dados do cliente pelo CNPJ (BrasilAPI, grátis, sem chave) -----
+  async function buscarCnpj() {
+    if (buscandoCnpj) return
+    const digitos = soDigitos(form.contratanteDoc)
+
+    if (digitos.length === 11) {
+      setCnpjMsg({
+        texto: 'Isso é um CPF — dados de pessoa física são protegidos, preencha manualmente.',
+        erro: true,
+      })
+      return
+    }
+    if (digitos.length !== 14) {
+      setCnpjMsg({ texto: 'Digite um CNPJ válido (14 dígitos) para buscar.', erro: true })
+      return
+    }
+
+    setBuscandoCnpj(true)
+    setCnpjMsg(null)
+    try {
+      const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digitos}`)
+      if (r.status === 404) throw new Error('CNPJ não encontrado.')
+      if (!r.ok) throw new Error('Não foi possível consultar agora. Tente novamente.')
+      const d = await r.json()
+
+      const endereco = [
+        (d.logradouro || '').trim(),
+        d.numero ? `nº ${d.numero}` : '',
+        (d.complemento || '').trim(),
+        (d.bairro || '').trim(),
+        `${d.municipio || ''}${d.uf ? ' - ' + d.uf : ''}`.trim(),
+        d.cep ? `CEP ${formatarCep(d.cep)}` : '',
+      ]
+        .filter(Boolean)
+        .join(', ')
+
+      setForm((f) => ({
+        ...f,
+        contratanteDoc: formatarCnpj(digitos),
+        contratanteNome: d.razao_social || f.contratanteNome,
+        contratanteEndereco: endereco || f.contratanteEndereco,
+      }))
+      setCnpjMsg({
+        texto: `Dados de "${d.razao_social}" preenchidos. Confira antes de gerar.`,
+        erro: false,
+      })
+    } catch (e) {
+      setCnpjMsg({ texto: e?.message || 'Falha na consulta.', erro: true })
+    } finally {
+      setBuscandoCnpj(false)
+    }
   }
 
   // ----- Melhorar observações com IA -----
@@ -294,9 +352,25 @@ export default function App() {
                     <input className={inputCls} value={form.contratanteNome} onChange={set('contratanteNome')} placeholder="Nome do cliente ou empresa" />
                   </Field>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="CPF ou CNPJ">
-                      <input className={inputCls} value={form.contratanteDoc} onChange={set('contratanteDoc')} placeholder="000.000.000-00" />
-                    </Field>
+                    <div>
+                      <span className="mb-1 block text-sm font-medium text-slate-700">CPF ou CNPJ</span>
+                      <div className="flex gap-2">
+                        <input className={inputCls} value={form.contratanteDoc} onChange={set('contratanteDoc')} placeholder="CNPJ busca automático" />
+                        <button
+                          type="button"
+                          onClick={buscarCnpj}
+                          disabled={buscandoCnpj}
+                          className="shrink-0 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {buscandoCnpj ? '…' : 'Buscar'}
+                        </button>
+                      </div>
+                      {cnpjMsg && (
+                        <p className={`mt-1 text-xs ${cnpjMsg.erro ? 'text-rose-600' : 'text-emerald-600'}`}>
+                          {cnpjMsg.texto}
+                        </p>
+                      )}
+                    </div>
                     <Field label="Cidade do foro">
                       <input className={inputCls} value={form.foroCidade} onChange={set('foroCidade')} placeholder="Ex.: São Paulo - SP" />
                     </Field>

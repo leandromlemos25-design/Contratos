@@ -63,6 +63,18 @@ Quase tudo que você precisa ajustar está em **`src/templates.js`**:
 - `{{#MENSALIDADE}} ... {{/MENSALIDADE}}` → entra **só quando há mensalidade**.
 - `{{#SEM_MENSALIDADE}} ... {{/SEM_MENSALIDADE}}` → entra **só quando não há**.
 
+## Busca automática por CNPJ
+
+No campo **CPF ou CNPJ** (seção do contrato), digite um **CNPJ** e clique em
+**"Buscar"** — o app consulta a [BrasilAPI](https://brasilapi.com.br) (gratuita,
+pública, sem chave) e preenche **razão social** e **endereço completo** do cliente
+automaticamente.
+
+- Roda direto no navegador, sem backend.
+- **Só funciona com CNPJ** (empresa). Para **CPF** (pessoa física) o preenchimento é
+  manual — dados de pessoa física são protegidos e não há API pública.
+- Se a consulta falhar ou o CNPJ não existir, o app avisa e mantém o preenchimento manual.
+
 ## Lógica da mensalidade (automática nos dois documentos)
 
 - **Mensalidade em branco ou 0** → "Contrato SEM mensalidade".
