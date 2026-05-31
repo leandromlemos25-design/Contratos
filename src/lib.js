@@ -44,6 +44,23 @@ export function temMensalidade(valorMensalidadeRaw) {
   return parseMoeda(valorMensalidadeRaw) > 0
 }
 
+// Só os dígitos de uma string (remove pontos, traços, barra, espaços).
+export function soDigitos(s) {
+  return String(s ?? '').replace(/\D/g, '')
+}
+
+// 14 dígitos -> "00.000.000/0000-00"
+export function formatarCnpj(s) {
+  const d = soDigitos(s).slice(0, 14)
+  return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') || d
+}
+
+// 8 dígitos -> "00000-000"
+export function formatarCep(s) {
+  const d = soDigitos(s).slice(0, 8)
+  return d.replace(/^(\d{5})(\d{3})$/, '$1-$2') || d
+}
+
 // "Motor" simples de template:
 //  1) Resolve blocos condicionais {{#MENSALIDADE}}...{{/MENSALIDADE}} e
 //     {{#SEM_MENSALIDADE}}...{{/SEM_MENSALIDADE}}.
