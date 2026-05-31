@@ -526,16 +526,12 @@ export default function App() {
       <header className="no-print sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            {MARCA.logo ? (
-              <img src={MARCA.logo} alt={MARCA.nomeNegocio} className="h-11 w-auto" />
-            ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 font-bold text-white">
-                S
-              </div>
+            {MARCA.logo && (
+              <img src={MARCA.logo} alt="" className="h-10 w-auto" />
             )}
             <div className="leading-tight">
-              <p className="text-sm font-semibold">Proposta &amp; Contrato</p>
-              <p className="text-xs text-slate-500">{MARCA.nomeNegocio}</p>
+              <p className="text-base font-bold text-[#0a47a4]">{MARCA.nomeNegocio}</p>
+              <p className="text-xs text-slate-500">Proposta &amp; Contrato</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -943,10 +939,15 @@ function Modal({ titulo, children, onClose, largo }) {
    Visualização da PROPOSTA
    ========================================================================= */
 function LogoDoc() {
-  if (!MARCA.logo) return null
   return (
-    <div className="mb-4 flex justify-center">
-      <img src={MARCA.logo} alt={MARCA.nomeNegocio} className="h-20 w-auto" />
+    <div className="mb-6 flex items-center justify-center gap-3 border-b border-slate-200 pb-4">
+      {MARCA.logo && (
+        <img src={MARCA.logo} alt="" className="h-14 w-auto" />
+      )}
+      <div className="text-left leading-tight">
+        <p className="text-2xl font-bold text-[#0a47a4]">{MARCA.nomeNegocio}</p>
+        <p className="text-xs text-slate-500">{MARCA.slogan}</p>
+      </div>
     </div>
   )
 }
