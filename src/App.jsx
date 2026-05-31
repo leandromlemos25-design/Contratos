@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CONTRATADO, MARCA, CONTRATO_BASE } from './templates.js'
 import {
   parseMoeda,
@@ -41,8 +41,29 @@ export default function App() {
   const [cepInput, setCepInput] = useState('')
   const [buscandoCep, setBuscandoCep] = useState(false)
   const [cepMsg, setCepMsg] = useState(null) // { texto, erro } | null
+
+  // --- Banco de dados / login ---
+  const [autenticado, setAutenticado] = useState(false)
+  const [mostrarLogin, setMostrarLogin] = useState(false)
+  const [senha, setSenha] = useState('')
+  const [loginMsg, setLoginMsg] = useState('')
+  const [salvando, setSalvando] = useState(false)
+  const [salvoMsg, setSalvoMsg] = useState(null) // { texto, erro } | null
+  const [mostrarLista, setMostrarLista] = useState(false)
+  const [lista, setLista] = useState([])
+  const [carregandoLista, setCarregandoLista] = useState(false)
+  const [listaErro, setListaErro] = useState('')
+
   const printRef = useRef(null)
   const camposContratoRef = useRef(null)
+
+  // Ao abrir o app, checa se já existe sessão válida.
+  useEffect(() => {
+    fetch('/api/me', { credentials: 'same-origin' })
+      .then((r) => r.json())
+      .then((d) => setAutenticado(!!d.autenticado))
+      .catch(() => {})
+  }, [])
 
   const set = (campo) => (e) =>
     setForm((f) => ({ ...f, [campo]: e.target.value }))
@@ -249,6 +270,178 @@ export default function App() {
     }
   }
 
+  // ----- Login / banco de dados -----
+  async function fazerLogin(e) {
+    e?.preventDefault?.()
+    setLoginMsg('')
+    try {
+      const r = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ senha }),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(d.error || 'Falha no login.')
+      setAutenticado(true)
+      setMostrarLogin(false)
+      setSenha('')
+    } catch (err) {
+      setLoginMsg(err?.message || 'Falha no login.')
+    }
+  }
+
+  async function logout() {
+    await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {})
+    setAutenticado(false)
+    setMostrarLista(false)
+  }
+
+  // Monta o payload do documento atual para salvar no banco.
+  function payloadAtual() {
+    if (!doc) return null
+    if (doc.tipo === 'contrato') {
+      return {
+        tipo: 'contrato',
+        comMensalidade: doc.com,
+        clienteNome: form.contratanteNome,
+        contato: form.contato,
+        doc: form.contratanteDoc,
+        endereco: form.contratanteEndereco,
+        valorLicenca: licenca,
+        valorImplantacao: implantacao,
+        valorMensalidade: mensalidade,
+        totalInicial,
+        observacoes: form.observacoes,
+        vigencia: form.vigencia,
+        formaPagamento: form.formaPagamento,
+        foro: form.foroCidade,
+        contratoTexto: doc.texto,
+        form,
+        status: 'salvo',
+      }
+    }
+    return {
+      tipo: 'proposta',
+      comMensalidade: doc.com,
+      clienteNome: form.cliente,
+      contato: form.contato,
+      valorLicenca: licenca,
+      valorImplantacao: implantacao,
+      valorMensalidade: mensalidade,
+      totalInicial,
+      observacoes: form.observacoes,
+      contratoTexto: textoPlano,
+      form,
+      status: 'salvo',
+    }
+  }
+
+  async function salvarNoBanco() {
+    if (salvando) return
+    if (!autenticado) {
+      setMostrarLogin(true)
+      return
+    }
+    const payload = payloadAtual()
+    if (!payload) return
+    setSalvando(true)
+    setSalvoMsg(null)
+    try {
+      const r = await fetch('/api/contratos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (r.status === 401) {
+        setAutenticado(false)
+        setMostrarLogin(true)
+        throw new Error('Faça login para salvar.')
+      }
+      if (!r.ok) throw new Error(d.error || 'Falha ao salvar.')
+      setSalvoMsg({ texto: 'Salvo no banco. ✓', erro: false })
+    } catch (err) {
+      setSalvoMsg({ texto: err?.message || 'Falha ao salvar.', erro: true })
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function abrirLista() {
+    if (!autenticado) {
+      setMostrarLogin(true)
+      return
+    }
+    setMostrarLista(true)
+    setCarregandoLista(true)
+    setListaErro('')
+    try {
+      const r = await fetch('/api/contratos', { credentials: 'same-origin' })
+      if (r.status === 401) {
+        setAutenticado(false)
+        setMostrarLogin(true)
+        throw new Error('Faça login.')
+      }
+      const d = await r.json()
+      setLista(d.contratos || [])
+    } catch (err) {
+      setListaErro(err?.message || 'Falha ao carregar.')
+    } finally {
+      setCarregandoLista(false)
+    }
+  }
+
+  async function abrirContrato(id) {
+    try {
+      const r = await fetch(`/api/contrato?id=${encodeURIComponent(id)}`, {
+        credentials: 'same-origin',
+      })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error || 'Falha ao abrir.')
+      const c = d.contrato
+      if (c.form_json) setForm({ ...FORM_INICIAL, ...c.form_json })
+      if (c.tipo === 'contrato') {
+        setDoc({ tipo: 'contrato', com: c.com_mensalidade, texto: c.contrato_texto })
+      } else {
+        const f = c.form_json || {}
+        const lic = parseMoeda(f.valorLicenca)
+        const imp = parseMoeda(f.valorImplantacao)
+        const men = parseMoeda(f.valorMensalidade)
+        setDoc({
+          tipo: 'proposta',
+          com: temMensalidade(f.valorMensalidade),
+          cliente: f.cliente?.trim() || '—',
+          contato: f.contato?.trim() || '',
+          licenca: lic,
+          implantacao: imp,
+          mensalidade: men,
+          totalInicial: lic + imp,
+          observacoes: f.observacoes?.trim() || '',
+        })
+      }
+      setMostrarLista(false)
+      scrollParaDocumento()
+    } catch (err) {
+      setListaErro(err?.message || 'Falha ao abrir.')
+    }
+  }
+
+  async function excluirContrato(id) {
+    if (!confirm('Excluir este registro do banco? Esta ação não pode ser desfeita.')) return
+    try {
+      const r = await fetch(`/api/contrato?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        credentials: 'same-origin',
+      })
+      if (!r.ok) throw new Error('Falha ao excluir.')
+      setLista((l) => l.filter((c) => c.id !== id))
+    } catch (err) {
+      setListaErro(err?.message || 'Falha ao excluir.')
+    }
+  }
+
   // ----- Melhorar observações com IA -----
   async function melhorarObservacoes() {
     const texto = form.observacoes.trim()
@@ -292,9 +485,22 @@ export default function App() {
               <p className="text-xs text-slate-500">{MARCA.nomeNegocio}</p>
             </div>
           </div>
-          <span className="hidden rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 sm:inline">
-            Pronto para reunião
-          </span>
+          <div className="flex items-center gap-2">
+            {autenticado ? (
+              <>
+                <button onClick={abrirLista} className={btnGhost}>
+                  Meus contratos
+                </button>
+                <button onClick={logout} className="text-sm text-slate-500 hover:text-slate-700">
+                  Sair
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setMostrarLogin(true)} className={btnGhost}>
+                Entrar
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -479,7 +685,10 @@ export default function App() {
                 <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium uppercase tracking-wide text-slate-600">
                   {doc.tipo === 'proposta' ? 'Proposta comercial' : 'Contrato'}
                 </span>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={salvarNoBanco} disabled={salvando} className={btnGhost}>
+                    {salvando ? 'Salvando…' : '💾 Salvar'}
+                  </button>
                   <button onClick={copiar} className={btnGhost}>
                     {copiado ? '✓ Copiado' : 'Copiar'}
                   </button>
@@ -488,6 +697,11 @@ export default function App() {
                   </button>
                 </div>
               </div>
+            )}
+            {salvoMsg && (
+              <p className={`no-print mb-3 text-xs ${salvoMsg.erro ? 'text-rose-600' : 'text-emerald-600'}`}>
+                {salvoMsg.texto}
+              </p>
             )}
 
             {/* Área imprimível */}
@@ -513,9 +727,97 @@ export default function App() {
         </div>
 
         <footer className="no-print mt-12 border-t border-slate-200 pt-6 text-center text-xs text-slate-400">
-          Documentos gerados localmente no seu navegador — nenhum dado é enviado a servidores.
+          Documentos gerados no seu navegador. Só vão para o banco quando você clica em “Salvar”.
         </footer>
       </main>
+
+      {/* ---------- Modal de login ---------- */}
+      {mostrarLogin && (
+        <Modal onClose={() => setMostrarLogin(false)} titulo="Entrar">
+          <form onSubmit={fazerLogin} className="space-y-3">
+            <p className="text-sm text-slate-600">
+              Digite sua senha para salvar e acessar seus contratos.
+            </p>
+            <input
+              type="password"
+              autoFocus
+              className={inputCls}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="Senha"
+            />
+            {loginMsg && <p className="text-xs text-rose-600">{loginMsg}</p>}
+            <button type="submit" className={`${btnPrimary} w-full`}>
+              Entrar
+            </button>
+          </form>
+        </Modal>
+      )}
+
+      {/* ---------- Modal: meus contratos ---------- */}
+      {mostrarLista && (
+        <Modal onClose={() => setMostrarLista(false)} titulo="Meus contratos" largo>
+          {carregandoLista && <p className="text-sm text-slate-500">Carregando…</p>}
+          {listaErro && <p className="text-sm text-rose-600">{listaErro}</p>}
+          {!carregandoLista && !listaErro && lista.length === 0 && (
+            <p className="text-sm text-slate-500">Nenhum documento salvo ainda.</p>
+          )}
+          {lista.length > 0 && (
+            <ul className="divide-y divide-slate-100">
+              {lista.map((c) => (
+                <li key={c.id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-800">
+                      {c.cliente_nome || '(sem nome)'}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {c.tipo === 'contrato' ? 'Contrato' : 'Proposta'}
+                      {' · '}
+                      {c.com_mensalidade ? 'com mensalidade' : 'sem mensalidade'}
+                      {c.total_inicial != null && ` · ${formatBRL(c.total_inicial)}`}
+                      {' · '}
+                      {new Date(c.criado_em).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <button onClick={() => abrirContrato(c.id)} className={btnGhost}>
+                      Abrir
+                    </button>
+                    <button
+                      onClick={() => excluirContrato(c.id)}
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-100"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Modal>
+      )}
+    </div>
+  )
+}
+
+function Modal({ titulo, children, onClose, largo }) {
+  return (
+    <div
+      className="no-print fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className={`w-full ${largo ? 'max-w-lg' : 'max-w-sm'} rounded-2xl bg-white p-5 shadow-xl`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-900">{titulo}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            ✕
+          </button>
+        </div>
+        {children}
+      </div>
     </div>
   )
 }

@@ -81,6 +81,35 @@ Há também um campo **CEP** que preenche o endereço do contratante via BrasilA
 (rua, bairro, cidade - UF, CEP). Útil principalmente para **pessoa física (CPF)**,
 onde o CNPJ não ajuda. O **número e o complemento** você adiciona à mão no endereço.
 
+## Banco de dados — salvar e acessar contratos (Fase 1)
+
+Dá para **salvar os documentos gerados** num banco e acessá-los depois, protegido
+por **login com senha**. Usa **Neon** (Postgres serverless, camada grátis) e funções
+serverless na Vercel — nada de banco no navegador.
+
+### Configuração (uma vez)
+
+1. Crie uma conta grátis em [neon.tech](https://neon.tech), crie um projeto e copie a
+   **connection string** (algo como `postgresql://user:senha@...neon.tech/db?sslmode=require`).
+2. Na Vercel, em **Settings → Environment Variables**, adicione:
+
+   | Variável         | Valor                                                        |
+   |------------------|--------------------------------------------------------------|
+   | `DATABASE_URL`   | a connection string do Neon                                  |
+   | `APP_PASSWORD`   | a senha que **você** vai usar para entrar no app             |
+   | `SESSION_SECRET` | um texto aleatório longo (ex.: gere em qualquer gerador de senha) |
+
+3. Faça o deploy. A tabela `contratos` é criada automaticamente no primeiro uso.
+
+### Como usar
+
+- Clique em **Entrar** (canto superior direito) e informe a `APP_PASSWORD`.
+- Gere uma proposta ou contrato e clique em **💾 Salvar**.
+- Clique em **Meus contratos** para listar, **abrir** (recarrega o documento) ou **excluir**.
+
+> Sem essas variáveis, o app funciona normalmente como gerador local — só os
+> botões de salvar/listar ficam indisponíveis.
+
 ## Lógica da mensalidade (automática nos dois documentos)
 
 - **Mensalidade em branco ou 0** → "Contrato SEM mensalidade".
