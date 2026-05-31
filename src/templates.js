@@ -4,18 +4,15 @@
 
 // -----------------------------------------------------------------------------
 //  SEUS DADOS (CONTRATADO) — aparecem na qualificação das partes do contrato.
-//  Preencha uma única vez aqui. O app reaproveita em toda geração.
 // -----------------------------------------------------------------------------
 export const CONTRATADO = {
   nome: 'Leandro Morais Lemos',
   documento: '016.234.906-85', // CPF ou CNPJ
   endereco: 'Rua Manoel Gonzalves de Araújo, nº 52, Jardim América, Sacramento - MG, CEP 38190-000',
-  mei: false, // true = sou MEI (Microempreendedor Individual)
-  emiteNotaFiscal: true, // true = emito nota fiscal de serviço
 }
 
 // -----------------------------------------------------------------------------
-//  Identidade visual / textos da marca usados na PROPOSTA e no cabeçalho.
+//  Identidade visual / textos da marca.
 // -----------------------------------------------------------------------------
 export const MARCA = {
   nomeNegocio: 'SmartFlux',
@@ -29,88 +26,82 @@ export const MARCA = {
 //  REGRAS:
 //   • Não reescreva cláusulas a cada geração: o app só substitui as
 //     variáveis {{ASSIM}} pelos dados do formulário.
-//   • Trechos entre {{#MENSALIDADE}} ... {{/MENSALIDADE}} só entram no
-//     documento quando HÁ mensalidade (acompanhamento mensal).
-//   • Trechos entre {{#SEM_MENSALIDADE}} ... {{/SEM_MENSALIDADE}} só entram
-//     quando NÃO há mensalidade.
+//   • Trechos entre {{#MENSALIDADE}} ... {{/MENSALIDADE}} só entram quando
+//     HÁ mensalidade; {{#SEM_MENSALIDADE}} ... {{/SEM_MENSALIDADE}} só quando NÃO há.
 //
 //  Variáveis disponíveis:
-//   Contratante: {{CONTRATANTE_NOME}} {{CONTRATANTE_DOC}} {{CONTRATANTE_ENDERECO}}
-//   Contratado:  {{CONTRATADO_NOME}} {{CONTRATADO_DOC}} {{CONTRATADO_ENDERECO}}
-//                {{CONTRATADO_REGIME}} {{CONTRATADO_NOTA}}
-//   Valores:     {{VALOR_LICENCA}} {{VALOR_IMPLANTACAO}} {{TOTAL_INICIAL}}
-//                {{VALOR_MENSALIDADE}}
-//   Condições:   {{FORMA_PAGAMENTO}} {{VIGENCIA}} {{FORO_CIDADE}} {{DATA_EXTENSO}}
+//   Partes:    {{CONTRATANTE_NOME}} {{CONTRATANTE_DOC}} {{CONTRATANTE_ENDERECO}}
+//              {{CONTRATADO_NOME}} {{CONTRATADO_DOC}} {{CONTRATADO_ENDERECO}}
+//   Valores:   {{VALOR_LICENCA}} {{VALOR_IMPLANTACAO}} {{TOTAL_INICIAL}} {{VALOR_MENSALIDADE}}
+//   Escopo:    {{ESCOPO}}
+//   Condições: {{FORMA_PAGAMENTO}} {{DIAS_ATRASO}} {{PRAZO_IMPLANTACAO}} {{PRAZO_ACEITE}}
+//              {{PERIODO_LICENCA}} {{AVISO_PREVIO}} {{PRAZO_SANAR}} {{MULTA}}
+//              {{FORO_CIDADE}} {{DATA_EXTENSO}}
 // =============================================================================
-export const CONTRATO_BASE = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE IMPLANTAÇÃO DE CRM E AUTOMAÇÃO
+export const CONTRATO_BASE = `CONTRATO DE LICENCIAMENTO DE USO DE SOFTWARE E PRESTAÇÃO DE SERVIÇOS DE TECNOLOGIA
 
-Pelo presente instrumento particular, de um lado:
+CONTRATANTE: {{CONTRATANTE_NOME}}, inscrito(a) no CPF/CNPJ sob o nº {{CONTRATANTE_DOC}}, com endereço em {{CONTRATANTE_ENDERECO}}, doravante denominado(a) CONTRATANTE.
 
-CONTRATANTE: {{CONTRATANTE_NOME}}, inscrito(a) no CPF/CNPJ sob o nº {{CONTRATANTE_DOC}}, com endereço em {{CONTRATANTE_ENDERECO}}, doravante denominado(a) simplesmente CONTRATANTE;
+CONTRATADO: {{CONTRATADO_NOME}}, inscrito(a) no CPF/CNPJ sob o nº {{CONTRATADO_DOC}}, com endereço em {{CONTRATADO_ENDERECO}}, doravante denominado(a) CONTRATADO.
 
-e, de outro lado,
-
-CONTRATADO: {{CONTRATADO_NOME}}, inscrito(a) no CPF/CNPJ sob o nº {{CONTRATADO_DOC}}, {{CONTRATADO_REGIME}}com endereço em {{CONTRATADO_ENDERECO}}, doravante denominado(a) simplesmente CONTRATADO;
-
-As partes acima identificadas têm, entre si, justo e contratado o presente Contrato de Prestação de Serviços, que se regerá pelas cláusulas e condições a seguir, e ainda pela legislação aplicável, em especial o Código Civil Brasileiro (Lei nº 10.406/2002) e o Código de Defesa do Consumidor, quando cabível.
+As partes, de comum acordo, celebram o presente Contrato de Licenciamento de Uso de Software e Prestação de Serviços de Tecnologia, regido pelo Código Civil (Lei nº 10.406/2002), pela Lei do Software (Lei nº 9.609/1998) e pela Lei Geral de Proteção de Dados (Lei nº 13.709/2018), mediante as cláusulas e condições seguintes.
 
 CLÁUSULA 1ª — DO OBJETO
-1.1. O presente contrato tem por objeto a prestação, pelo CONTRATADO, dos serviços de implantação e configuração de plataforma de CRM (Customer Relationship Management), incluindo a parametrização de funis de venda, cadastro de etapas, configuração de automações de processos comerciais e integrações com os canais de atendimento indicados pelo CONTRATANTE.
-1.2. Integram o objeto, ainda, a estruturação inicial dos fluxos de trabalho, a importação assistida de dados quando aplicável e a orientação técnica para uso da plataforma pela equipe do CONTRATANTE.
-{{#MENSALIDADE}}1.3. O objeto contempla, adicionalmente, o serviço continuado de ACOMPANHAMENTO MENSAL, compreendendo suporte técnico, ajustes nas automações, manutenção das configurações, otimização contínua dos processos e atendimento às dúvidas operacionais da equipe do CONTRATANTE, prestado de forma recorrente durante a vigência deste contrato.
-{{/MENSALIDADE}}{{#SEM_MENSALIDADE}}1.3. O objeto deste contrato restringe-se à implantação inicial descrita nesta cláusula, NÃO abrangendo serviço de acompanhamento mensal, suporte continuado ou manutenção recorrente, os quais, caso desejados, deverão ser objeto de contratação à parte.
-{{/SEM_MENSALIDADE}}
-CLÁUSULA 2ª — DO VALOR E DA FORMA DE PAGAMENTO
-2.1. Pelos serviços de implantação descritos na Cláusula 1ª, o CONTRATANTE pagará ao CONTRATADO o valor total de {{TOTAL_INICIAL}}, assim composto: (i) licença de uso da plataforma — {{VALOR_LICENCA}}; e (ii) implantação e configuração — {{VALOR_IMPLANTACAO}}.
-2.2. O pagamento do valor de implantação será realizado da seguinte forma: {{FORMA_PAGAMENTO}}.
-{{#MENSALIDADE}}2.3. Pelo serviço de acompanhamento mensal descrito no item 1.3, o CONTRATANTE pagará ao CONTRATADO o valor mensal de {{VALOR_MENSALIDADE}}, devido a partir da conclusão da implantação e durante toda a vigência deste contrato, com vencimento no mesmo dia de cada mês subsequente.
-2.4. O atraso no pagamento de qualquer parcela acarretará multa moratória de 2% (dois por cento) sobre o valor em atraso, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die, sem prejuízo da correção monetária.
-2.5. {{CONTRATADO_NOTA}}
-{{/MENSALIDADE}}{{#SEM_MENSALIDADE}}2.3. O atraso no pagamento de qualquer parcela acarretará multa moratória de 2% (dois por cento) sobre o valor em atraso, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die, sem prejuízo da correção monetária.
-2.4. {{CONTRATADO_NOTA}}
-{{/SEM_MENSALIDADE}}
+1.1. Constitui objeto deste contrato: (a) a disponibilização, mediante revenda/sublicenciamento, do acesso à plataforma de CRM Kommo, operada em modelo SaaS (Software as a Service) por terceiro; (b) os serviços de implantação, configuração e parametrização da plataforma; e (c) o desenvolvimento de automações de processos comerciais (fluxos, integrações e bots).
+{{#MENSALIDADE}}1.2. Integra também o objeto a prestação de serviço continuado de acompanhamento mensal, nos termos da Cláusula 3ª.
+{{/MENSALIDADE}}1.3. O CONTRATADO atua como integrador e revendedor/sublicenciador, não sendo o desenvolvedor nem o titular da plataforma Kommo.
 
-CLÁUSULA 3ª — DO PRAZO E DA VIGÊNCIA
-3.1. O prazo para execução e entrega dos serviços de implantação é de {{VIGENCIA}}, contado do recebimento, pelo CONTRATADO, dos dados, acessos e informações necessários ao início dos trabalhos.
-{{#MENSALIDADE}}3.2. O serviço de acompanhamento mensal vigorará por prazo indeterminado a partir da conclusão da implantação, podendo ser denunciado por qualquer das partes mediante aviso prévio, por escrito, de 30 (trinta) dias.
-{{/MENSALIDADE}}{{#SEM_MENSALIDADE}}3.2. Concluída e aceita a implantação, e quitados os valores devidos, considerar-se-á cumprido o objeto deste contrato.
-{{/SEM_MENSALIDADE}}3.3. O início dos prazos fica condicionado ao fornecimento, pelo CONTRATANTE, de todas as informações, acessos e materiais indispensáveis à execução dos serviços.
+CLÁUSULA 2ª — DO ESCOPO E DAS EXCLUSÕES
+2.1. O escopo dos serviços compreende: {{ESCOPO}}.
+2.2. Salvo previsão expressa, não estão incluídos: provimento de infraestrutura de servidores da plataforma; conectividade de internet do CONTRATANTE; custos de APIs de terceiros (ex.: WhatsApp/Meta); telefonia; widgets do marketplace; e suporte além do expressamente previsto neste contrato.
 
-CLÁUSULA 4ª — DAS OBRIGAÇÕES DO CONTRATADO
-4.1. Executar os serviços com zelo, diligência e dentro das melhores práticas técnicas aplicáveis.
-4.2. Cumprir os prazos acordados, salvo por fato imputável ao CONTRATANTE ou por motivo de força maior, devidamente comunicado.
-4.3. Manter o CONTRATANTE informado sobre o andamento dos trabalhos e prestar os esclarecimentos solicitados.
-4.4. Tratar com sigilo as informações e os dados a que tiver acesso, na forma das Cláusulas 7ª e 8ª.
-{{#MENSALIDADE}}4.5. Durante o período de acompanhamento mensal, prestar suporte e realizar os ajustes contratados em prazo razoável, conforme a natureza da solicitação.
-{{/MENSALIDADE}}
-CLÁUSULA 5ª — DAS OBRIGAÇÕES DO CONTRATANTE
-5.1. Fornecer, em tempo hábil, todos os dados, acessos, credenciais e informações necessários à execução dos serviços.
-5.2. Designar interlocutor responsável por validar entregas e prestar as informações solicitadas pelo CONTRATADO.
-5.3. Efetuar os pagamentos nas datas e condições pactuadas na Cláusula 2ª.
-5.4. Utilizar a plataforma e as configurações entregues em conformidade com a legislação vigente, responsabilizando-se pelo conteúdo dos dados que inserir ou tratar por meio dela.
+CLÁUSULA 3ª — DO VALOR E DA FORMA DE PAGAMENTO
+3.1. Pelo licenciamento e pela implantação, o CONTRATANTE pagará ao CONTRATADO o valor inicial de {{TOTAL_INICIAL}}, assim composto: licença {{VALOR_LICENCA}} e implantação {{VALOR_IMPLANTACAO}}.
+{{#MENSALIDADE}}3.2. Pelo serviço de acompanhamento mensal, o CONTRATANTE pagará a quantia recorrente de {{VALOR_MENSALIDADE}} por mês, devida a partir da conclusão da implantação.
+{{/MENSALIDADE}}3.3. Forma e condições de pagamento: {{FORMA_PAGAMENTO}}.
+3.4. O atraso superior a {{DIAS_ATRASO}} dias no pagamento, após notificação, autoriza o CONTRATADO a suspender os serviços e o acesso à plataforma, sem prejuízo da cobrança dos valores devidos.
 
-CLÁUSULA 6ª — DA RESCISÃO E DA MULTA
-6.1. O presente contrato poderá ser rescindido por qualquer das partes, mediante comunicação escrita, em caso de descumprimento de qualquer cláusula não sanado no prazo de 10 (dez) dias contados da notificação.
-6.2. Na hipótese de rescisão imotivada por iniciativa de qualquer das partes antes da conclusão da implantação, a parte que der causa pagará à outra multa equivalente a 20% (vinte por cento) do valor da implantação, sem prejuízo da remuneração pelos serviços já efetivamente prestados.
-{{#MENSALIDADE}}6.3. A denúncia do serviço de acompanhamento mensal observará o aviso prévio previsto no item 3.2, permanecendo devidos os valores proporcionais ao período efetivamente prestado.
-{{/MENSALIDADE}}6.4. A rescisão não desobriga as partes quanto às obrigações de confidencialidade e proteção de dados, que subsistem após o término deste contrato.
+CLÁUSULA 4ª — DOS PRAZOS E DA ENTREGA
+4.1. O prazo de implantação é de {{PRAZO_IMPLANTACAO}}, contado do fornecimento, pelo CONTRATANTE, de todos os acessos, credenciais e informações necessários.
+4.2. O atraso do CONTRATANTE no fornecimento desses insumos suspende a contagem do prazo do CONTRATADO.
+4.3. Concluída a implantação, o CONTRATANTE terá {{PRAZO_ACEITE}} para validar a entrega; o silêncio nesse prazo importa aceite tácito dos serviços.
 
-CLÁUSULA 7ª — DA PROTEÇÃO DE DADOS (LGPD)
-7.1. As partes obrigam-se a observar a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados Pessoais — LGPD) no tratamento de quaisquer dados pessoais relacionados a este contrato.
-7.2. O CONTRATANTE é o CONTROLADOR dos dados pessoais inseridos na plataforma de CRM (incluindo dados de seus clientes, leads e contatos), cabendo-lhe definir as finalidades e os meios do tratamento e assegurar a existência de base legal adequada.
-7.3. O CONTRATADO atua como OPERADOR, tratando os dados pessoais estritamente conforme as instruções do CONTRATANTE e na medida necessária à prestação dos serviços, sendo vedado utilizá-los para finalidade diversa.
-7.4. O CONTRATADO adotará medidas técnicas e administrativas razoáveis e aptas a proteger os dados pessoais de acessos não autorizados e de situações acidentais ou ilícitas de destruição, perda, alteração, comunicação ou difusão.
-7.5. Encerrado o contrato, o CONTRATADO eliminará ou devolverá ao CONTRATANTE os dados pessoais a que teve acesso, salvo obrigação legal de retenção, comprometendo-se a não reter cópias além do estritamente necessário.
-7.6. O CONTRATADO comunicará ao CONTRATANTE, sem demora injustificada, qualquer incidente de segurança de que tenha conhecimento e que possa acarretar risco aos titulares dos dados.
+CLÁUSULA 5ª — DA ASSINATURA DO SOFTWARE DE TERCEIRO (KOMMO)
+5.1. O acesso à plataforma Kommo depende de assinatura recorrente, de natureza continuada, paga em ciclos e sujeita às condições, prazos mínimos e reajustes definidos pelo titular da plataforma.
+5.2. O valor de licença previsto na Cláusula 3ª refere-se ao período inicial de {{PERIODO_LICENCA}}. A renovação da assinatura, após esse período, será objeto de ajuste próprio entre as partes; a não renovação implica a suspensão do acesso pelo titular da plataforma, sem responsabilidade do CONTRATADO.
+5.3. Eventuais reajustes praticados pelo titular da plataforma poderão ser repassados ao CONTRATANTE, mediante comunicação prévia.
 
-CLÁUSULA 8ª — DA CONFIDENCIALIDADE
-8.1. As partes obrigam-se a manter o mais absoluto sigilo sobre todas as informações de natureza técnica, comercial, financeira ou estratégica a que tiverem acesso em razão deste contrato, não as divulgando a terceiros sem autorização prévia e escrita da outra parte.
-8.2. A obrigação de confidencialidade vigorará durante a execução do contrato e por prazo de 2 (dois) anos após o seu término, ressalvadas as informações que se tornarem públicas por meio lícito ou cuja divulgação seja exigida por lei ou ordem de autoridade competente.
+CLÁUSULA 6ª — DA PROPRIEDADE INTELECTUAL
+6.1. Nos termos do Art. 4º da Lei nº 9.609/1998, pertencem exclusivamente ao CONTRATADO todos os direitos patrimoniais, códigos-fonte, lógicas estruturais, scripts, parametrizações e arquiteturas desenvolvidos para as automações e bots objeto deste contrato.
+6.2. O CONTRATADO outorga ao CONTRATANTE licença de uso não exclusiva e intransferível, vigente enquanto durar a relação contratual, vedada a cópia, a engenharia reversa ou a cessão dos fluxos lógicos a terceiros.
+6.3. Os dados e cadastros inseridos pelo CONTRATANTE na plataforma são de sua exclusiva e inalienável propriedade.
 
-CLÁUSULA 9ª — DO FORO
-9.1. As partes elegem o foro da Comarca de {{FORO_CIDADE}}, com renúncia expressa a qualquer outro, por mais privilegiado que seja, para dirimir as questões oriundas do presente contrato.
+CLÁUSULA 7ª — DA LIMITAÇÃO DE RESPONSABILIDADE
+7.1. O CONTRATADO não responde por lucros cessantes, perda de dados ou interrupções decorrentes de: (i) instabilidade ou indisponibilidade da plataforma Kommo; (ii) alterações em APIs de terceiros (ex.: WhatsApp/Meta); (iii) falha na conexão de internet do CONTRATANTE; ou (iv) uso indevido pelo CONTRATANTE.
+7.2. A responsabilidade total do CONTRATADO fica limitada ao valor efetivamente pago neste contrato, ressalvada a hipótese de dolo.
 
-E, por estarem assim justas e contratadas, as partes firmam o presente instrumento em 2 (duas) vias de igual teor e forma.
+CLÁUSULA 8ª — DA PROTEÇÃO DE DADOS (LGPD)
+8.1. O CONTRATANTE atua como CONTROLADOR dos dados pessoais tratados na plataforma, cabendo-lhe as bases legais e o atendimento aos titulares e à ANPD.
+8.2. O CONTRATADO atua como OPERADOR, tratando dados pessoais apenas conforme as instruções do CONTRATANTE e na medida necessária à prestação dos serviços.
+8.3. O armazenamento dos dados ocorre na infraestrutura do titular da plataforma, na condição de suboperador.
+
+CLÁUSULA 9ª — DA CONFIDENCIALIDADE
+9.1. As partes obrigam-se a manter sigilo sobre as informações confidenciais a que tiverem acesso, durante e após a vigência do contrato, salvo obrigação legal de divulgação.
+
+CLÁUSULA 10ª — DA VIGÊNCIA E DA RESCISÃO
+{{#SEM_MENSALIDADE}}10.1. O contrato vigora até a conclusão e o aceite da implantação, extinguindo-se pelo cumprimento do objeto.
+{{/SEM_MENSALIDADE}}{{#MENSALIDADE}}10.1. O contrato vigora por prazo indeterminado a partir da conclusão da implantação, podendo qualquer das partes rescindi-lo mediante aviso prévio de {{AVISO_PREVIO}}.
+{{/MENSALIDADE}}10.2. A rescisão imotivada antes da conclusão da implantação obriga ao pagamento dos serviços já executados até a data da rescisão.
+10.3. O descumprimento de obrigação contratual, não sanado em {{PRAZO_SANAR}} após notificação, autoriza a rescisão, sem prejuízo de multa de {{MULTA}} e das perdas e danos cabíveis.
+
+CLÁUSULA 11ª — DAS DISPOSIÇÕES GERAIS
+11.1. Este contrato não gera vínculo empregatício, societário ou de exclusividade entre as partes.
+11.2. Qualquer alteração só terá validade mediante aditivo escrito assinado por ambas as partes.
+
+CLÁUSULA 12ª — DO FORO
+12.1. Fica eleito o foro da comarca de {{FORO_CIDADE}} para dirimir as controvérsias oriundas deste contrato, com renúncia a qualquer outro, por mais privilegiado que seja.
+
+E, por estarem de pleno acordo, firmam o presente instrumento em 2 (duas) vias de igual teor.
 
 {{FORO_CIDADE}}, {{DATA_EXTENSO}}.
 
@@ -122,4 +113,11 @@ CONTRATANTE
 
 _______________________________________
 {{CONTRATADO_NOME}}
-CONTRATADO`
+CONTRATADO
+
+
+Testemunhas:
+
+_______________________________________  CPF: ____________________
+
+_______________________________________  CPF: ____________________`
