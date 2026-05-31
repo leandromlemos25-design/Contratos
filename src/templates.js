@@ -20,7 +20,7 @@ export const CONTRATADO = {
 export const MARCA = {
   nomeNegocio: 'SmartFlux',
   slogan: 'Automação inteligente para empresas',
-  logo: '/logo-s.png', // só o símbolo S (transparente); o texto é renderizado ao lado
+  logo: '/logo-smartflux.jpg', // logo completa (símbolo + texto + slogan)
 }
 
 // =============================================================================
