@@ -183,6 +183,17 @@ export default function App() {
     window.print()
   }
 
+  // Copia o link de assinatura para colar no WhatsApp/Kommo (envio pelo seu número).
+  async function copiarLink(url) {
+    try {
+      await navigator.clipboard.writeText(url)
+      setListaErro('')
+      alert('Link copiado! Cole na conversa do cliente (WhatsApp ou Kommo).')
+    } catch {
+      window.prompt('Copie o link de assinatura:', url)
+    }
+  }
+
   // ----- Buscar dados do cliente pelo CNPJ (BrasilAPI, grátis, sem chave) -----
   async function buscarCnpj() {
     if (buscandoCnpj) return
@@ -567,7 +578,10 @@ export default function App() {
           {/* ---------- Coluna do formulário ---------- */}
           <div className="no-print space-y-6">
             <Card>
-              <CardTitle>Dados da proposta</CardTitle>
+              <CardTitle>Dados e valores</CardTitle>
+              <p className="-mt-3 mb-4 text-xs text-slate-500">
+                Os valores abaixo são usados <strong>tanto na proposta quanto no contrato</strong> — preencha uma vez só.
+              </p>
               <div className="grid gap-4">
                 <Field label="Nome do cliente / empresa">
                   <input className={inputCls} value={form.cliente} onChange={set('cliente')} placeholder="Ex.: Loja do João LTDA" />
@@ -900,14 +914,21 @@ export default function App() {
                             {c._checando ? 'Checando…' : 'Atualizar status'}
                           </button>
                           {c.assinatura_url && (
-                            <a
-                              href={c.assinatura_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-xs text-indigo-600 underline"
-                            >
-                              link de assinatura
-                            </a>
+                            <>
+                              <button onClick={() => copiarLink(c.assinatura_url)} className={btnGhost}>
+                                Copiar link
+                              </button>
+                              <a
+                                href={`https://wa.me/?text=${encodeURIComponent(
+                                  `Olá! Segue o contrato para assinatura digital: ${c.assinatura_url}`,
+                                )}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100"
+                              >
+                                WhatsApp
+                              </a>
+                            </>
                           )}
                         </>
                       )}
