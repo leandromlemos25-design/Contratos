@@ -18,7 +18,8 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const rows = await sql`
         SELECT id, criado_em, tipo, com_mensalidade, cliente_nome, contato,
-               total_inicial, valor_mensalidade, status, assinatura_url, assinado_em
+               total_inicial, valor_mensalidade, status, assinatura_url,
+               assinatura_doc_id, assinado_em
         FROM contratos
         ORDER BY criado_em DESC
         LIMIT 300`

@@ -428,6 +428,59 @@ export default function App() {
     }
   }
 
+  function atualizarItemLista(id, campos) {
+    setLista((l) => l.map((c) => (c.id === id ? { ...c, ...campos } : c)))
+  }
+
+  async function enviarAssinatura(c) {
+    const tel = window.prompt(
+      `WhatsApp de ${c.cliente_nome || 'cliente'} (com DDD):`,
+      soDigitos(c.contato || ''),
+    )
+    if (!tel) return
+    setListaErro('')
+    atualizarItemLista(c.id, { _enviando: true })
+    try {
+      const r = await fetch('/api/assinatura', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ id: c.id, telefone: tel }),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(d.error || 'Falha ao enviar.')
+      atualizarItemLista(c.id, {
+        status: 'enviado',
+        assinatura_url: d.link,
+        assinatura_doc_id: 'ok',
+        _enviando: false,
+      })
+    } catch (err) {
+      atualizarItemLista(c.id, { _enviando: false })
+      setListaErro(err?.message || 'Falha ao enviar para assinatura.')
+    }
+  }
+
+  async function atualizarStatus(c) {
+    setListaErro('')
+    atualizarItemLista(c.id, { _checando: true })
+    try {
+      const r = await fetch(`/api/assinatura?id=${encodeURIComponent(c.id)}`, {
+        credentials: 'same-origin',
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(d.error || 'Falha ao consultar.')
+      atualizarItemLista(c.id, {
+        status: d.status,
+        assinatura_url: d.signedUrl || c.assinatura_url,
+        _checando: false,
+      })
+    } catch (err) {
+      atualizarItemLista(c.id, { _checando: false })
+      setListaErro(err?.message || 'Falha ao consultar status.')
+    }
+  }
+
   async function excluirContrato(id) {
     if (!confirm('Excluir este registro do banco? Esta ação não pode ser desfeita.')) return
     try {
@@ -765,31 +818,79 @@ export default function App() {
           {lista.length > 0 && (
             <ul className="divide-y divide-slate-100">
               {lista.map((c) => (
-                <li key={c.id} className="flex items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-800">
-                      {c.cliente_nome || '(sem nome)'}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {c.tipo === 'contrato' ? 'Contrato' : 'Proposta'}
-                      {' · '}
-                      {c.com_mensalidade ? 'com mensalidade' : 'sem mensalidade'}
-                      {c.total_inicial != null && ` · ${formatBRL(c.total_inicial)}`}
-                      {' · '}
-                      {new Date(c.criado_em).toLocaleDateString('pt-BR')}
-                    </p>
+                <li key={c.id} className="py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-2 truncate text-sm font-medium text-slate-800">
+                        {c.cliente_nome || '(sem nome)'}
+                        <BadgeStatus status={c.status} />
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {c.tipo === 'contrato' ? 'Contrato' : 'Proposta'}
+                        {' · '}
+                        {c.com_mensalidade ? 'com mensalidade' : 'sem mensalidade'}
+                        {c.total_inicial != null && ` · ${formatBRL(c.total_inicial)}`}
+                        {' · '}
+                        {new Date(c.criado_em).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button onClick={() => abrirContrato(c.id)} className={btnGhost}>
+                        Abrir
+                      </button>
+                      <button
+                        onClick={() => excluirContrato(c.id)}
+                        className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-100"
+                      >
+                        Excluir
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 gap-2">
-                    <button onClick={() => abrirContrato(c.id)} className={btnGhost}>
-                      Abrir
-                    </button>
-                    <button
-                      onClick={() => excluirContrato(c.id)}
-                      className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-100"
-                    >
-                      Excluir
-                    </button>
-                  </div>
+
+                  {c.tipo === 'contrato' && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {c.status !== 'enviado' && c.status !== 'assinado' && (
+                        <button
+                          onClick={() => enviarAssinatura(c)}
+                          disabled={c._enviando}
+                          className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+                        >
+                          {c._enviando ? 'Enviando…' : '📲 Enviar p/ assinatura'}
+                        </button>
+                      )}
+                      {c.status === 'enviado' && (
+                        <>
+                          <button
+                            onClick={() => atualizarStatus(c)}
+                            disabled={c._checando}
+                            className={btnGhost}
+                          >
+                            {c._checando ? 'Checando…' : 'Atualizar status'}
+                          </button>
+                          {c.assinatura_url && (
+                            <a
+                              href={c.assinatura_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-indigo-600 underline"
+                            >
+                              link de assinatura
+                            </a>
+                          )}
+                        </>
+                      )}
+                      {c.status === 'assinado' && c.assinatura_url && (
+                        <a
+                          href={c.assinatura_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100"
+                        >
+                          ✓ Ver PDF assinado
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -798,6 +899,22 @@ export default function App() {
       )}
     </div>
   )
+}
+
+function BadgeStatus({ status }) {
+  if (status === 'assinado')
+    return (
+      <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+        Assinado
+      </span>
+    )
+  if (status === 'enviado')
+    return (
+      <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+        Aguardando
+      </span>
+    )
+  return null
 }
 
 function Modal({ titulo, children, onClose, largo }) {

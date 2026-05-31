@@ -110,6 +110,36 @@ serverless na Vercel — nada de banco no navegador.
 > Sem essas variáveis, o app funciona normalmente como gerador local — só os
 > botões de salvar/listar ficam indisponíveis.
 
+## Assinatura digital + WhatsApp (Fase 2 — Autentique)
+
+Contratos salvos podem ser **enviados para assinatura digital pelo WhatsApp** via
+[Autentique](https://www.autentique.com.br) (validade jurídica + trilha de auditoria).
+
+### Configuração (uma vez)
+
+1. Crie uma conta na **Autentique**.
+2. Pegue o **API Token** no painel (Configurações → API / Integrações).
+3. Na Vercel, adicione a variável de ambiente:
+
+   | Variável           | Valor                          |
+   |--------------------|--------------------------------|
+   | `AUTENTIQUE_TOKEN` | o token da API da Autentique   |
+
+4. Redeploy.
+
+### Como usar
+
+- Em **Meus contratos**, num registro do tipo **Contrato**, clique em
+  **📲 Enviar p/ assinatura** e informe o WhatsApp do cliente.
+- O app gera o **PDF do contrato**, envia à Autentique, que **dispara o WhatsApp**
+  com o link de assinatura para o cliente.
+- O status vira **Aguardando**; clique em **Atualizar status** para checar. Quando o
+  cliente assina, vira **Assinado** e aparece o botão **Ver PDF assinado**.
+
+> Observação: a API da Autentique pode ter pequenas diferenças de schema entre versões.
+> Se o envio retornar erro, o app mostra a mensagem da Autentique na tela — é só me
+> repassar que eu ajusto o campo correspondente.
+
 ## Lógica da mensalidade (automática nos dois documentos)
 
 - **Mensalidade em branco ou 0** → "Contrato SEM mensalidade".
