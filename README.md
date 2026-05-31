@@ -29,7 +29,24 @@ npm run preview    # pré-visualiza o build
 1. Suba o repositório no GitHub.
 2. Na Vercel, **New Project → Import** o repositório.
 3. Framework detectado automaticamente: **Vite**. Build: `npm run build`, Output: `dist`.
-4. Deploy. Pronto.
+4. **Para o botão "Melhorar com IA" funcionar**, adicione a variável de ambiente
+   `ANTHROPIC_API_KEY` em **Settings → Environment Variables** (cole sua chave da
+   Anthropic). Sem isso, o app funciona normalmente, só o botão de IA fica indisponível.
+5. Deploy. Pronto.
+
+## Revisão de texto com IA (botão "Melhorar com IA")
+
+O campo **Observações** tem um botão que corrige o português e melhora a escrita
+usando a IA da Claude.
+
+- A chamada à IA roda numa **função serverless** (`api/melhorar.js`) — sua chave da
+  Anthropic fica **escondida no servidor** (variável `ANTHROPIC_API_KEY` na Vercel),
+  nunca no navegador.
+- O modelo é editável no topo de `api/melhorar.js` (constante `MODEL`). Padrão:
+  `claude-haiku-4-5` (rápido e barato). Troque por `claude-sonnet-4-6` ou
+  `claude-opus-4-8` se quiser mais qualidade.
+- **Em desenvolvimento local** (`npm run dev`), a função serverless não roda — o botão
+  só funciona no site publicado na Vercel (ou com `vercel dev`).
 
 ## Onde editar
 

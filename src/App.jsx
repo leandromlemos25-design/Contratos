@@ -31,7 +31,10 @@ export default function App() {
   const [doc, setDoc] = useState(null) // { tipo, com, ...dados } | null
   const [mostrarCamposContrato, setMostrarCamposContrato] = useState(false)
   const [copiado, setCopiado] = useState(false)
+  const [melhorando, setMelhorando] = useState(false)
+  const [erroIa, setErroIa] = useState('')
   const printRef = useRef(null)
+  const camposContratoRef = useRef(null)
 
   const set = (campo) => (e) =>
     setForm((f) => ({ ...f, [campo]: e.target.value }))
@@ -61,6 +64,23 @@ export default function App() {
 
   // ----- Geração do CONTRATO -----
   function gerarContrato() {
+    // Garante que os campos do contratante (dados do cliente) fiquem visíveis.
+    setMostrarCamposContrato(true)
+
+    // Se ainda faltam os dados essenciais do cliente, leva o usuário até eles
+    // antes de gerar o documento.
+    const faltaCliente =
+      !form.contratanteNome.trim() || !form.contratanteDoc.trim()
+    if (faltaCliente) {
+      requestAnimationFrame(() => {
+        camposContratoRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      })
+      return
+    }
+
     const regime =
       CONTRATADO.mei || CONTRATADO.emiteNotaFiscal
         ? `${[
@@ -134,6 +154,31 @@ export default function App() {
     window.print()
   }
 
+  // ----- Melhorar observações com IA -----
+  async function melhorarObservacoes() {
+    const texto = form.observacoes.trim()
+    if (!texto || melhorando) return
+    setMelhorando(true)
+    setErroIa('')
+    try {
+      const r = await fetch('/api/melhorar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto }),
+      })
+      const data = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(data.error || 'Falha ao melhorar o texto.')
+      setForm((f) => ({ ...f, observacoes: data.texto }))
+    } catch (e) {
+      setErroIa(
+        e?.message ||
+          'Não foi possível melhorar agora. (A IA funciona no site publicado na Vercel.)',
+      )
+    } finally {
+      setMelhorando(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
       {/* ---------- Topo ---------- */}
@@ -192,9 +237,21 @@ export default function App() {
                   <MoneyInput value={form.valorMensalidade} onChange={set('valorMensalidade')} />
                 </Field>
 
-                <Field label="Observações">
+                <div>
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-slate-700">Observações</span>
+                    <button
+                      type="button"
+                      onClick={melhorarObservacoes}
+                      disabled={melhorando || !form.observacoes.trim()}
+                      className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {melhorando ? 'Melhorando…' : '✨ Melhorar com IA'}
+                    </button>
+                  </div>
                   <textarea className={`${inputCls} min-h-[80px] resize-y`} value={form.observacoes} onChange={set('observacoes')} placeholder="Escopo, condições especiais, prazos combinados…" />
-                </Field>
+                  {erroIa && <p className="mt-1 text-xs text-rose-600">{erroIa}</p>}
+                </div>
               </div>
 
               {/* Indicador automático do tipo */}
@@ -211,25 +268,26 @@ export default function App() {
             </Card>
 
             {/* Campos extras do contrato */}
+            <div ref={camposContratoRef} className="scroll-mt-20">
             <Card>
               <button
                 type="button"
                 onClick={() => setMostrarCamposContrato((v) => !v)}
                 className="flex w-full items-center justify-between text-left"
               >
-                <CardTitle className="mb-0">Campos extras do contrato</CardTitle>
+                <CardTitle className="mb-0">Dados do cliente e do contrato</CardTitle>
                 <span className="text-sm text-indigo-600">
                   {mostrarCamposContrato ? 'Ocultar' : 'Mostrar'}
                 </span>
               </button>
               <p className="mt-1 text-xs text-slate-500">
-                Necessários só para gerar o contrato. Seus dados (contratado) ficam em <code>src/templates.js</code>.
+                Dados do cliente (contratante) e condições, usados só no contrato. Seus dados (contratado) ficam em <code>src/templates.js</code>.
               </p>
 
               {mostrarCamposContrato && (
                 <div className="mt-4 grid gap-4">
-                  <Field label="Contratante — nome completo / razão social">
-                    <input className={inputCls} value={form.contratanteNome} onChange={set('contratanteNome')} />
+                  <Field label="Cliente (contratante) — nome completo / razão social">
+                    <input className={inputCls} value={form.contratanteNome} onChange={set('contratanteNome')} placeholder="Nome do cliente ou empresa" />
                   </Field>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="CPF ou CNPJ">
@@ -251,6 +309,7 @@ export default function App() {
                 </div>
               )}
             </Card>
+            </div>
 
             {/* Botões de geração */}
             <div className="grid gap-3 sm:grid-cols-2">
