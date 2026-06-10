@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "gen:logo": "node scripts/gen-logo.mjs",
+    "prebuild": "node scripts/gen-logo.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

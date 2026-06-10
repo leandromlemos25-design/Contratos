@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CONTRATADO, MARCA, CONTRATO_BASE } from './templates.js'
+import { CONTRATADO, MARCA, CONTRATO_BASE, CONTRATO_PADROES } from './templates.js'
 import {
   parseMoeda,
   formatBRL,
@@ -27,15 +27,8 @@ const FORM_INICIAL = {
   vigencia: '', // prazo de implantação
   formaPagamento: '',
   foroCidade: '',
-  // Condições do contrato (já vêm com padrões editáveis)
-  escopoServico:
-    'implantação e configuração da plataforma, parametrização de funis e etapas de vendas, e desenvolvimento das automações de processos comerciais combinadas',
-  periodoLicenca: '12 (doze) meses',
-  prazoAceite: '7 (sete) dias',
-  diasAtraso: '10 (dez)',
-  avisoPrevio: '30 (trinta) dias',
-  prazoSanar: '10 (dez) dias',
-  multa: '20% (vinte por cento) sobre o valor da implantação',
+  // Condições do contrato (padrões editáveis — fonte única em CONTRATO_PADROES)
+  ...CONTRATO_PADROES,
 }
 
 export default function App() {
@@ -62,6 +55,8 @@ export default function App() {
   const [lista, setLista] = useState([])
   const [carregandoLista, setCarregandoLista] = useState(false)
   const [listaErro, setListaErro] = useState('')
+  const [enviandoId, setEnviandoId] = useState(null)
+  const [checandoId, setChecandoId] = useState(null)
 
   const printRef = useRef(null)
   const camposContratoRef = useRef(null)
@@ -132,13 +127,13 @@ export default function App() {
       VALOR_MENSALIDADE: formatBRL(mensalidade),
       ESCOPO: form.escopoServico.trim() || '[ESCOPO DOS SERVIÇOS]',
       FORMA_PAGAMENTO: form.formaPagamento.trim() || '[FORMA DE PAGAMENTO]',
-      DIAS_ATRASO: form.diasAtraso.trim() || '10 (dez)',
+      DIAS_ATRASO: form.diasAtraso.trim() || CONTRATO_PADROES.diasAtraso,
       PRAZO_IMPLANTACAO: form.vigencia.trim() || '[PRAZO DE IMPLANTAÇÃO]',
-      PRAZO_ACEITE: form.prazoAceite.trim() || '7 (sete) dias',
-      PERIODO_LICENCA: form.periodoLicenca.trim() || '12 (doze) meses',
-      AVISO_PREVIO: form.avisoPrevio.trim() || '30 (trinta) dias',
-      PRAZO_SANAR: form.prazoSanar.trim() || '10 (dez) dias',
-      MULTA: form.multa.trim() || '20% (vinte por cento) sobre o valor da implantação',
+      PRAZO_ACEITE: form.prazoAceite.trim() || CONTRATO_PADROES.prazoAceite,
+      PERIODO_LICENCA: form.periodoLicenca.trim() || CONTRATO_PADROES.periodoLicenca,
+      AVISO_PREVIO: form.avisoPrevio.trim() || CONTRATO_PADROES.avisoPrevio,
+      PRAZO_SANAR: form.prazoSanar.trim() || CONTRATO_PADROES.prazoSanar,
+      MULTA: form.multa.trim() || CONTRATO_PADROES.multa,
       FORO_CIDADE: form.foroCidade.trim() || '[CIDADE DO FORO]',
       DATA_EXTENSO: dataPorExtenso(),
     }
@@ -450,7 +445,7 @@ export default function App() {
     )
     if (!tel) return
     setListaErro('')
-    atualizarItemLista(c.id, { _enviando: true })
+    setEnviandoId(c.id)
     try {
       const r = await fetch('/api/assinatura', {
         method: 'POST',
@@ -460,21 +455,17 @@ export default function App() {
       })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) throw new Error(d.error || 'Falha ao enviar.')
-      atualizarItemLista(c.id, {
-        status: 'enviado',
-        assinatura_url: d.link,
-        assinatura_doc_id: 'ok',
-        _enviando: false,
-      })
+      atualizarItemLista(c.id, { status: 'enviado', assinatura_url: d.link })
     } catch (err) {
-      atualizarItemLista(c.id, { _enviando: false })
       setListaErro(err?.message || 'Falha ao enviar para assinatura.')
+    } finally {
+      setEnviandoId(null)
     }
   }
 
   async function atualizarStatus(c) {
     setListaErro('')
-    atualizarItemLista(c.id, { _checando: true })
+    setChecandoId(c.id)
     try {
       const r = await fetch(`/api/assinatura?id=${encodeURIComponent(c.id)}`, {
         credentials: 'same-origin',
@@ -484,11 +475,11 @@ export default function App() {
       atualizarItemLista(c.id, {
         status: d.status,
         assinatura_url: d.signedUrl || c.assinatura_url,
-        _checando: false,
       })
     } catch (err) {
-      atualizarItemLista(c.id, { _checando: false })
       setListaErro(err?.message || 'Falha ao consultar status.')
+    } finally {
+      setChecandoId(null)
     }
   }
 
@@ -898,20 +889,20 @@ export default function App() {
                       {c.status !== 'enviado' && c.status !== 'assinado' && (
                         <button
                           onClick={() => enviarAssinatura(c)}
-                          disabled={c._enviando}
+                          disabled={enviandoId === c.id}
                           className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
                         >
-                          {c._enviando ? 'Enviando…' : '📲 Enviar p/ assinatura'}
+                          {enviandoId === c.id ? 'Enviando…' : '📲 Enviar p/ assinatura'}
                         </button>
                       )}
                       {c.status === 'enviado' && (
                         <>
                           <button
                             onClick={() => atualizarStatus(c)}
-                            disabled={c._checando}
+                            disabled={checandoId === c.id}
                             className={btnGhost}
                           >
-                            {c._checando ? 'Checando…' : 'Atualizar status'}
+                            {checandoId === c.id ? 'Checando…' : 'Atualizar status'}
                           </button>
                           {c.assinatura_url && (
                             <>

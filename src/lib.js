@@ -49,16 +49,16 @@ export function soDigitos(s) {
   return String(s ?? '').replace(/\D/g, '')
 }
 
-// 14 dígitos -> "00.000.000/0000-00"
+// 14 dígitos -> "00.000.000/0000-00" (string parcial fica como está)
 export function formatarCnpj(s) {
   const d = soDigitos(s).slice(0, 14)
-  return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') || d
+  return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')
 }
 
 // 8 dígitos -> "00000-000"
 export function formatarCep(s) {
   const d = soDigitos(s).slice(0, 8)
-  return d.replace(/^(\d{5})(\d{3})$/, '$1-$2') || d
+  return d.replace(/^(\d{5})(\d{3})$/, '$1-$2')
 }
 
 // "Motor" simples de template:
