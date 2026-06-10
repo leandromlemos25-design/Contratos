@@ -20,6 +20,21 @@ export const MARCA = {
   logo: '/logo-smartflux.jpg', // logo completa (símbolo + texto + slogan)
 }
 
+// -----------------------------------------------------------------------------
+//  Padrões editáveis das condições jurídicas do contrato. Fonte ÚNICA: usados
+//  tanto no estado inicial do formulário quanto no preenchimento do contrato.
+// -----------------------------------------------------------------------------
+export const CONTRATO_PADROES = {
+  escopoServico:
+    'implantação e configuração da plataforma, parametrização de funis e etapas de vendas, e desenvolvimento das automações de processos comerciais combinadas',
+  periodoLicenca: '12 (doze) meses',
+  prazoAceite: '7 (sete) dias',
+  diasAtraso: '10 (dez)',
+  avisoPrevio: '30 (trinta) dias',
+  prazoSanar: '10 (dez) dias',
+  multa: '20% (vinte por cento) sobre o valor da implantação',
+}
+
 // =============================================================================
 //  TEXTO-BASE DO CONTRATO  —  fonte única da verdade.
 //
