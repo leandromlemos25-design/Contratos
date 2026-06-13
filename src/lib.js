@@ -61,6 +61,14 @@ export function formatarCep(s) {
   return d.replace(/^(\d{5})(\d{3})$/, '$1-$2')
 }
 
+// MEI/EI costuma vir na BrasilAPI como "12345678 NOME DA PESSOA" (números do
+// documento grudados no nome). Remove o bloco numérico inicial.
+export function limparRazaoSocial(s) {
+  return String(s ?? '')
+    .replace(/^[\d.\/\-\s]+/, '')
+    .trim()
+}
+
 // "Motor" simples de template:
 //  1) Resolve blocos condicionais {{#MENSALIDADE}}...{{/MENSALIDADE}} e
 //     {{#SEM_MENSALIDADE}}...{{/SEM_MENSALIDADE}}.

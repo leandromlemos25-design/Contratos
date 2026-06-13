@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { verificarSessao } from '../lib/auth.js'
 
 // -----------------------------------------------------------------------------
 //  Função serverless (Vercel) que revisa o português das observações com IA.
@@ -25,6 +26,12 @@ const client = new Anthropic() // lê ANTHROPIC_API_KEY do ambiente
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Método não permitido.' })
+    return
+  }
+
+  // Exige sessão válida — evita proxy aberto para a API da Anthropic na sua chave.
+  if (!(await verificarSessao(req))) {
+    res.status(401).json({ error: 'Não autenticado.' })
     return
   }
 

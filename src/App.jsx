@@ -9,6 +9,7 @@ import {
   soDigitos,
   formatarCnpj,
   formatarCep,
+  limparRazaoSocial,
 } from './lib.js'
 
 // Estado inicial do formulário.
@@ -27,6 +28,10 @@ const FORM_INICIAL = {
   vigencia: '', // prazo de implantação
   formaPagamento: '',
   foroCidade: '',
+  // Representante legal (PJ) — opcional
+  repNome: '',
+  repCargo: '',
+  repDoc: '',
   // Condições do contrato (padrões editáveis — fonte única em CONTRATO_PADROES)
   ...CONTRATO_PADROES,
 }
@@ -36,6 +41,7 @@ export default function App() {
   const [doc, setDoc] = useState(null) // { tipo, com, ...dados } | null
   const [mostrarCamposContrato, setMostrarCamposContrato] = useState(false)
   const [copiado, setCopiado] = useState(false)
+  const [erroGerar, setErroGerar] = useState('')
   const [melhorando, setMelhorando] = useState(false)
   const [erroIa, setErroIa] = useState('')
   const [buscandoCnpj, setBuscandoCnpj] = useState(false)
@@ -79,8 +85,20 @@ export default function App() {
   const totalInicial = licenca + implantacao
   const com = temMensalidade(form.valorMensalidade)
 
+  // Bloqueia gerar documento sem nenhum valor (licença, implantação e
+  // mensalidade todos zerados/vazios). Retorna true se estiver tudo zero.
+  function semValores() {
+    if (totalInicial === 0 && mensalidade === 0) {
+      setErroGerar('Informe ao menos um valor (licença, implantação ou mensalidade) antes de gerar.')
+      return true
+    }
+    setErroGerar('')
+    return false
+  }
+
   // ----- Geração da PROPOSTA -----
   function gerarProposta() {
+    if (semValores()) return
     setDoc({
       tipo: 'proposta',
       com,
@@ -97,6 +115,8 @@ export default function App() {
 
   // ----- Geração do CONTRATO -----
   function gerarContrato() {
+    if (semValores()) return
+
     // Garante que os campos do contratante (dados do cliente) fiquem visíveis.
     setMostrarCamposContrato(true)
 
@@ -114,10 +134,20 @@ export default function App() {
       return
     }
 
+    // Frase do representante legal (PJ) — string vazia quando não há representante,
+    // assim o motor de template não precisa de bloco condicional novo.
+    const repNome = form.repNome.trim()
+    const repClausula = repNome
+      ? `, neste ato representada por ${repNome}` +
+        (form.repCargo.trim() ? `, ${form.repCargo.trim()}` : '') +
+        (form.repDoc.trim() ? `, CPF nº ${form.repDoc.trim()}` : '')
+      : ''
+
     const vars = {
       CONTRATANTE_NOME: form.contratanteNome.trim() || '[NOME / RAZÃO SOCIAL DO CONTRATANTE]',
       CONTRATANTE_DOC: form.contratanteDoc.trim() || '[CPF/CNPJ]',
       CONTRATANTE_ENDERECO: form.contratanteEndereco.trim() || '[ENDEREÇO COMPLETO]',
+      CONTRATANTE_REP_CLAUSULA: repClausula,
       CONTRATADO_NOME: CONTRATADO.nome,
       CONTRATADO_DOC: CONTRATADO.documento,
       CONTRATADO_ENDERECO: CONTRATADO.endereco,
@@ -134,6 +164,9 @@ export default function App() {
       AVISO_PREVIO: form.avisoPrevio.trim() || CONTRATO_PADROES.avisoPrevio,
       PRAZO_SANAR: form.prazoSanar.trim() || CONTRATO_PADROES.prazoSanar,
       MULTA: form.multa.trim() || CONTRATO_PADROES.multa,
+      GARANTIA_DEFEITOS: form.garantiaDefeitos.trim() || CONTRATO_PADROES.garantiaDefeitos,
+      INDICE_REAJUSTE: form.indiceReajuste.trim() || CONTRATO_PADROES.indiceReajuste,
+      JANELA_EXPORTACAO: form.janelaExportacao.trim() || CONTRATO_PADROES.janelaExportacao,
       FORO_CIDADE: form.foroCidade.trim() || '[CIDADE DO FORO]',
       DATA_EXTENSO: dataPorExtenso(),
     }
@@ -225,14 +258,19 @@ export default function App() {
         .filter(Boolean)
         .join(', ')
 
+      // Para MEI a razão social vem como "<documento> NOME"; limpa o bloco
+      // numérico. Se sobrar vazio, usa o nome fantasia.
+      const nome =
+        limparRazaoSocial(d.razao_social) || (d.nome_fantasia || '').trim() || d.razao_social || ''
+
       setForm((f) => ({
         ...f,
         contratanteDoc: formatarCnpj(digitos),
-        contratanteNome: d.razao_social || f.contratanteNome,
+        contratanteNome: nome || f.contratanteNome,
         contratanteEndereco: endereco || f.contratanteEndereco,
       }))
       setCnpjMsg({
-        texto: `Dados de "${d.razao_social}" preenchidos. Confira antes de gerar.`,
+        texto: `Dados de "${nome}" preenchidos. Confira antes de gerar.`,
         erro: false,
       })
     } catch (e) {
@@ -704,6 +742,20 @@ export default function App() {
                   <Field label="Endereço completo do contratante">
                     <input className={inputCls} value={form.contratanteEndereco} onChange={set('contratanteEndereco')} placeholder="Rua, nº, bairro, cidade - UF, CEP" />
                   </Field>
+
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <p className="mb-2 text-sm font-medium text-slate-600">
+                      Representante legal (PJ) <span className="font-normal text-slate-400">— opcional, só para empresas</span>
+                    </p>
+                    <div className="grid gap-3">
+                      <input className={inputCls} value={form.repNome} onChange={set('repNome')} placeholder="Nome do representante" />
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <input className={inputCls} value={form.repCargo} onChange={set('repCargo')} placeholder="Cargo (ex.: sócio-administrador)" />
+                        <input className={inputCls} value={form.repDoc} onChange={set('repDoc')} placeholder="CPF do representante" />
+                      </div>
+                    </div>
+                  </div>
+
                   <Field label="Escopo dos serviços">
                     <textarea className={`${inputCls} min-h-[70px] resize-y`} value={form.escopoServico} onChange={set('escopoServico')} placeholder="O que está incluído na implantação e nas automações" />
                   </Field>
@@ -743,6 +795,17 @@ export default function App() {
                       <Field label="Multa por descumprimento">
                         <input className={inputCls} value={form.multa} onChange={set('multa')} />
                       </Field>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Field label="Garantia de defeitos">
+                          <input className={inputCls} value={form.garantiaDefeitos} onChange={set('garantiaDefeitos')} />
+                        </Field>
+                        <Field label="Índice de reajuste">
+                          <input className={inputCls} value={form.indiceReajuste} onChange={set('indiceReajuste')} />
+                        </Field>
+                      </div>
+                      <Field label="Janela para exportar dados (pós-rescisão)">
+                        <input className={inputCls} value={form.janelaExportacao} onChange={set('janelaExportacao')} />
+                      </Field>
                     </div>
                   </details>
                 </div>
@@ -759,6 +822,12 @@ export default function App() {
                 Gerar contrato
               </button>
             </div>
+
+            {erroGerar && (
+              <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {erroGerar}
+              </p>
+            )}
 
             {/* Aviso fixo (tela, nunca no documento) */}
             <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
