@@ -32,7 +32,7 @@ export const CONTRATO_PADROES = {
   diasAtraso: '10 (dez)',
   avisoPrevio: '30 (trinta) dias',
   prazoSanar: '10 (dez) dias',
-  multa: '20% (vinte por cento) sobre o valor da implantação',
+  multa: '20% (vinte por cento) sobre o valor total inicial',
   garantiaDefeitos: '30 (trinta) dias',
   indiceReajuste: 'IPCA (IBGE)',
   janelaExportacao: '15 (quinze) dias',
