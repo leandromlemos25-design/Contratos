@@ -140,6 +140,30 @@ Contratos salvos podem ser **enviados para assinatura digital pelo WhatsApp** vi
 > Se o envio retornar erro, o app mostra a mensagem da Autentique na tela — é só me
 > repassar que eu ajusto o campo correspondente.
 
+## Integração com o Kommo (CRM)
+
+Duas capacidades, ambas degradam graciosamente se o Kommo não estiver configurado:
+
+1. **Importar dados do lead** — botão "🔗 Importar dados do Kommo" (seção do contrato):
+   informe o ID ou o link do lead e o app preenche nome, contato, CNPJ/CPF e endereço.
+2. **Atualizar lead ao assinar** — quando a Autentique confirma a assinatura, o app
+   adiciona uma nota no lead com o link do PDF assinado e (se configurado) move a etapa.
+
+### Configuração
+
+No Kommo: **Configurações → Integrações → criar integração privada** e copie o
+**token de longa duração**. Na Vercel, adicione:
+
+| Variável                   | Valor                                                        |
+|----------------------------|--------------------------------------------------------------|
+| `KOMMO_TOKEN`              | token de longa duração da integração privada do Kommo        |
+| `KOMMO_SUBDOMAIN`          | opcional — padrão `smartflux` (de `smartflux.kommo.com`)     |
+| `KOMMO_STAGE_ASSINADO`     | opcional — nome da etapa p/ mover ao assinar (ex.: `Contrato assinado`) |
+| `KOMMO_STAGE_ASSINADO_ID`  | opcional — ID numérico da etapa (tem prioridade sobre o nome) |
+
+Para a etapa mover sozinha, o contrato precisa ter sido **importado do Kommo** (assim
+o ID do lead fica vinculado) e **salvo** antes do envio para assinatura.
+
 ## Lógica da mensalidade (automática nos dois documentos)
 
 - **Mensalidade em branco ou 0** → "Contrato SEM mensalidade".
