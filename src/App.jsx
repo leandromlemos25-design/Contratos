@@ -50,8 +50,8 @@ export default function App() {
   const [mostrarCamposContrato, setMostrarCamposContrato] = useState(false)
   const [copiado, setCopiado] = useState(false)
   const [erroGerar, setErroGerar] = useState('')
-  const [melhorando, setMelhorando] = useState(false)
-  const [erroIa, setErroIa] = useState('')
+  const [melhorandoCampo, setMelhorandoCampo] = useState(null) // nome do campo em edição pela IA
+  const [iaErro, setIaErro] = useState(null) // { campo, texto } | null
   const [buscandoCnpj, setBuscandoCnpj] = useState(false)
   const [cnpjMsg, setCnpjMsg] = useState(null) // { texto, erro } | null
   const [cepInput, setCepInput] = useState('')
@@ -85,6 +85,9 @@ export default function App() {
 
   const set = (campo) => (e) =>
     setForm((f) => ({ ...f, [campo]: e.target.value }))
+
+  // Define um campo direto (usado pelos botões de atalho/chips).
+  const setCampo = (campo, valor) => setForm((f) => ({ ...f, [campo]: valor }))
 
   // ----- Cálculos derivados (ao vivo) -----
   const licenca = parseMoeda(form.valorLicenca)
@@ -549,28 +552,31 @@ export default function App() {
     }
   }
 
-  // ----- Melhorar observações com IA -----
-  async function melhorarObservacoes() {
-    const texto = form.observacoes.trim()
-    if (!texto || melhorando) return
-    setMelhorando(true)
-    setErroIa('')
+  // ----- Melhorar a escrita de um campo com IA (observações, forma de pagamento…) -----
+  async function melhorarCampo(campo) {
+    const texto = (form[campo] || '').trim()
+    if (!texto || melhorandoCampo) return
+    setMelhorandoCampo(campo)
+    setIaErro(null)
     try {
       const r = await fetch('/api/melhorar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ texto }),
       })
       const data = await r.json().catch(() => ({}))
       if (!r.ok) throw new Error(data.error || 'Falha ao melhorar o texto.')
-      setForm((f) => ({ ...f, observacoes: data.texto }))
+      setForm((f) => ({ ...f, [campo]: data.texto }))
     } catch (e) {
-      setErroIa(
-        e?.message ||
-          'Não foi possível melhorar agora. (A IA funciona no site publicado na Vercel.)',
-      )
+      setIaErro({
+        campo,
+        texto:
+          e?.message ||
+          'Não foi possível melhorar agora. (A IA funciona no site publicado na Vercel e exige login.)',
+      })
     } finally {
-      setMelhorando(false)
+      setMelhorandoCampo(null)
     }
   }
 
@@ -654,15 +660,15 @@ export default function App() {
                     <span className="text-sm font-medium text-slate-700">Observações</span>
                     <button
                       type="button"
-                      onClick={melhorarObservacoes}
-                      disabled={melhorando || !form.observacoes.trim()}
+                      onClick={() => melhorarCampo('observacoes')}
+                      disabled={melhorandoCampo === 'observacoes' || !form.observacoes.trim()}
                       className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {melhorando ? 'Melhorando…' : '✨ Melhorar com IA'}
+                      {melhorandoCampo === 'observacoes' ? 'Melhorando…' : '✨ Melhorar com IA'}
                     </button>
                   </div>
                   <textarea className={`${inputCls} min-h-[80px] resize-y`} value={form.observacoes} onChange={set('observacoes')} placeholder="Escopo, condições especiais, prazos combinados…" />
-                  {erroIa && <p className="mt-1 text-xs text-rose-600">{erroIa}</p>}
+                  {iaErro?.campo === 'observacoes' && <p className="mt-1 text-xs text-rose-600">{iaErro.texto}</p>}
                 </div>
 
                 <Field label="Validade da proposta" hint="Aparece na seção Condições da proposta">
@@ -780,14 +786,29 @@ export default function App() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Prazo de implantação">
                       <input className={inputCls} value={form.vigencia} onChange={set('vigencia')} placeholder="Ex.: 30 (trinta) dias úteis" />
+                      <Chips options={OPCOES_PRAZO} value={form.vigencia} onPick={(v) => setCampo('vigencia', v)} />
                     </Field>
                     <Field label="Período inicial da licença">
                       <input className={inputCls} value={form.periodoLicenca} onChange={set('periodoLicenca')} />
+                      <Chips options={OPCOES_LICENCA} value={form.periodoLicenca} onPick={(v) => setCampo('periodoLicenca', v)} />
                     </Field>
                   </div>
-                  <Field label="Forma de pagamento">
+
+                  <div>
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-slate-700">Forma de pagamento</span>
+                      <button
+                        type="button"
+                        onClick={() => melhorarCampo('formaPagamento')}
+                        disabled={melhorandoCampo === 'formaPagamento' || !form.formaPagamento.trim()}
+                        className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {melhorandoCampo === 'formaPagamento' ? 'Melhorando…' : '✨ IA'}
+                      </button>
+                    </div>
                     <input className={inputCls} value={form.formaPagamento} onChange={set('formaPagamento')} placeholder="Ex.: 50% na assinatura e 50% na entrega, via PIX" />
-                  </Field>
+                    {iaErro?.campo === 'formaPagamento' && <p className="mt-1 text-xs text-rose-600">{iaErro.texto}</p>}
+                  </div>
 
                   <details className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                     <summary className="cursor-pointer text-sm font-medium text-slate-600">
@@ -1046,6 +1067,39 @@ function BadgeStatus({ status }) {
       </span>
     )
   return null
+}
+
+// Atalhos clicáveis que preenchem um campo com um valor pronto.
+const OPCOES_PRAZO = [
+  { label: '5 dias', valor: '5 (cinco) dias úteis' },
+  { label: '10 dias', valor: '10 (dez) dias úteis' },
+  { label: '15 dias', valor: '15 (quinze) dias úteis' },
+  { label: '20 dias', valor: '20 (vinte) dias úteis' },
+]
+const OPCOES_LICENCA = [
+  { label: '6 meses', valor: '6 (seis) meses' },
+  { label: '12 meses', valor: '12 (doze) meses' },
+]
+
+function Chips({ options, value, onPick }) {
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1.5">
+      {options.map((o) => (
+        <button
+          key={o.valor}
+          type="button"
+          onClick={() => onPick(o.valor)}
+          className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+            value === o.valor
+              ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+              : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function Modal({ titulo, children, onClose, largo }) {
