@@ -21,6 +21,19 @@ export const MARCA = {
 }
 
 // -----------------------------------------------------------------------------
+//  Textos editáveis da PROPOSTA comercial (genéricos — sem citar fornecedor).
+// -----------------------------------------------------------------------------
+export const PROPOSTA_INTRO =
+  'Esta proposta apresenta o escopo, o investimento e as condições para a implantação do seu CRM, com automações e configuração sob medida para o seu processo comercial. O objetivo é organizar e automatizar o seu funil de vendas, dando à sua equipe mais produtividade e previsibilidade.'
+
+export const PROPOSTA_ITENS = [
+  'Implantação e configuração completa da plataforma de CRM',
+  'Estruturação dos funis e etapas do seu processo de vendas',
+  'Automações de processos comerciais (fluxos, integrações e bots)',
+  'Orientação e acompanhamento na adoção pela sua equipe',
+]
+
+// -----------------------------------------------------------------------------
 //  Padrões editáveis das condições jurídicas do contrato. Fonte ÚNICA: usados
 //  tanto no estado inicial do formulário quanto no preenchimento do contrato.
 // -----------------------------------------------------------------------------

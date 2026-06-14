@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CONTRATADO, MARCA, CONTRATO_BASE, CONTRATO_PADROES } from './templates.js'
+import {
+  CONTRATADO,
+  MARCA,
+  CONTRATO_BASE,
+  CONTRATO_PADROES,
+  PROPOSTA_INTRO,
+  PROPOSTA_ITENS,
+} from './templates.js'
 import {
   parseMoeda,
   formatBRL,
@@ -21,6 +28,7 @@ const FORM_INICIAL = {
   valorImplantacao: '',
   valorMensalidade: '', // opcional
   observacoes: '',
+  validadeProposta: '7 (sete) dias',
   // --- Extras só do contrato ---
   contratanteNome: '',
   contratanteDoc: '',
@@ -109,6 +117,9 @@ export default function App() {
       mensalidade,
       totalInicial,
       observacoes: form.observacoes.trim(),
+      formaPagamento: form.formaPagamento.trim(),
+      prazoImplantacao: form.vigencia.trim(),
+      validade: form.validadeProposta.trim(),
     })
     scrollParaDocumento()
   }
@@ -463,6 +474,9 @@ export default function App() {
           mensalidade: men,
           totalInicial: lic + imp,
           observacoes: f.observacoes?.trim() || '',
+          formaPagamento: f.formaPagamento?.trim() || '',
+          prazoImplantacao: f.vigencia?.trim() || '',
+          validade: f.validadeProposta?.trim() || '',
         })
       }
       setMostrarLista(false)
@@ -650,6 +664,10 @@ export default function App() {
                   <textarea className={`${inputCls} min-h-[80px] resize-y`} value={form.observacoes} onChange={set('observacoes')} placeholder="Escopo, condições especiais, prazos combinados…" />
                   {erroIa && <p className="mt-1 text-xs text-rose-600">{erroIa}</p>}
                 </div>
+
+                <Field label="Validade da proposta" hint="Aparece na seção Condições da proposta">
+                  <input className={inputCls} value={form.validadeProposta} onChange={set('validadeProposta')} />
+                </Field>
               </div>
 
               {/* Indicador automático do tipo */}
@@ -1083,6 +1101,29 @@ function PropostaView({ doc }) {
         </p>
       </div>
 
+      {/* Apresentação */}
+      <div className="mb-6">
+        <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Apresentação
+        </h3>
+        <p className="text-sm leading-relaxed text-slate-700">{PROPOSTA_INTRO}</p>
+      </div>
+
+      {/* O que está incluído */}
+      <div className="mb-6">
+        <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          O que está incluído
+        </h3>
+        <ul className="space-y-1 text-sm text-slate-700">
+          {PROPOSTA_ITENS.map((item, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="text-indigo-600">✓</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
         Detalhamento dos valores
       </h3>
@@ -1111,6 +1152,26 @@ function PropostaView({ doc }) {
             {formatBRL(doc.mensalidade)}
             <span className="text-sm font-medium text-indigo-500"> / mês</span>
           </p>
+        </div>
+      )}
+
+      {/* Condições */}
+      {(doc.formaPagamento || doc.prazoImplantacao || doc.validade) && (
+        <div className="mt-6">
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Condições
+          </h3>
+          <ul className="space-y-1 text-sm text-slate-700">
+            {doc.formaPagamento && (
+              <li><strong>Forma de pagamento:</strong> {doc.formaPagamento}</li>
+            )}
+            {doc.prazoImplantacao && (
+              <li><strong>Prazo de implantação:</strong> {doc.prazoImplantacao}</li>
+            )}
+            {doc.validade && (
+              <li><strong>Validade desta proposta:</strong> {doc.validade}</li>
+            )}
+          </ul>
         </div>
       )}
 
@@ -1158,6 +1219,12 @@ function propostaParaTexto(doc) {
     doc.contato ? `Contato: ${doc.contato}` : null,
     `Tipo: ${doc.com ? 'Com acompanhamento mensal' : 'Sem mensalidade (apenas implantação)'}`,
     '',
+    'APRESENTAÇÃO',
+    PROPOSTA_INTRO,
+    '',
+    'O QUE ESTÁ INCLUÍDO',
+    ...PROPOSTA_ITENS.map((i) => `- ${i}`),
+    '',
     'DETALHAMENTO DOS VALORES',
     `- Licença da plataforma: ${formatBRL(doc.licenca)}`,
     `- Implantação e configuração: ${formatBRL(doc.implantacao)}`,
@@ -1165,6 +1232,14 @@ function propostaParaTexto(doc) {
     `INVESTIMENTO INICIAL: ${formatBRL(doc.totalInicial)}`,
     doc.com ? `ACOMPANHAMENTO MENSAL: ${formatBRL(doc.mensalidade)} / mês` : null,
   ]
+  const cond = [
+    doc.formaPagamento ? `- Forma de pagamento: ${doc.formaPagamento}` : null,
+    doc.prazoImplantacao ? `- Prazo de implantação: ${doc.prazoImplantacao}` : null,
+    doc.validade ? `- Validade desta proposta: ${doc.validade}` : null,
+  ].filter(Boolean)
+  if (cond.length) {
+    linhas.push('', 'CONDIÇÕES', ...cond)
+  }
   if (doc.observacoes) {
     linhas.push('', 'OBSERVAÇÕES', doc.observacoes)
   }
