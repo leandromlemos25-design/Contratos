@@ -34,13 +34,15 @@ export default async function handler(req, res) {
         INSERT INTO contratos
           (tipo, com_mensalidade, cliente_nome, contato, doc, endereco,
            valor_licenca, valor_implantacao, valor_mensalidade, total_inicial,
-           observacoes, vigencia, forma_pagamento, foro, contrato_texto, form_json, status)
+           observacoes, vigencia, forma_pagamento, foro, contrato_texto, form_json, status,
+           kommo_lead_id)
         VALUES
           (${b.tipo || 'contrato'}, ${!!b.comMensalidade}, ${b.clienteNome || null}, ${b.contato || null},
            ${b.doc || null}, ${b.endereco || null},
            ${num(b.valorLicenca)}, ${num(b.valorImplantacao)}, ${num(b.valorMensalidade)}, ${num(b.totalInicial)},
            ${b.observacoes || null}, ${b.vigencia || null}, ${b.formaPagamento || null}, ${b.foro || null},
-           ${b.contratoTexto || null}, ${JSON.stringify(f)}, ${b.status || 'salvo'})
+           ${b.contratoTexto || null}, ${JSON.stringify(f)}, ${b.status || 'salvo'},
+           ${b.kommoLeadId || null})
         RETURNING id, criado_em`
       res.status(201).json({ contrato: rows[0] })
       return

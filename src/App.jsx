@@ -41,6 +41,8 @@ const FORM_INICIAL = {
   repNome: '',
   repCargo: '',
   repDoc: '',
+  // Kommo — ID do lead vinculado (para atualizar ao assinar)
+  kommoLeadId: '',
   // Condições do contrato (padrões editáveis — fonte única em CONTRATO_PADROES)
   ...CONTRATO_PADROES,
 }
@@ -56,6 +58,7 @@ export default function App() {
   const [iaErro, setIaErro] = useState(null) // { campo, texto } | null
   const [buscandoCnpj, setBuscandoCnpj] = useState(false)
   const [cnpjMsg, setCnpjMsg] = useState(null) // { texto, erro } | null
+  const [importandoKommo, setImportandoKommo] = useState(false)
   const [cepInput, setCepInput] = useState('')
   const [buscandoCep, setBuscandoCep] = useState(false)
   const [cepMsg, setCepMsg] = useState(null) // { texto, erro } | null
@@ -254,6 +257,40 @@ export default function App() {
     }
   }
 
+  // ----- Importar dados do lead do Kommo -----
+  async function importarKommo() {
+    if (importandoKommo) return
+    const entrada = window.prompt('ID ou link do lead no Kommo:', form.kommoLeadId || '')
+    if (!entrada) return
+    setImportandoKommo(true)
+    setCnpjMsg(null)
+    try {
+      const r = await fetch(`/api/kommo?lead=${encodeURIComponent(entrada)}`, {
+        credentials: 'same-origin',
+      })
+      const d = await r.json().catch(() => ({}))
+      if (r.status === 401) {
+        setAutenticado(false)
+        setMostrarLogin(true)
+        throw new Error('Faça login para importar do Kommo.')
+      }
+      if (!r.ok) throw new Error(d.error || 'Falha ao importar do Kommo.')
+      setForm((f) => ({
+        ...f,
+        kommoLeadId: d.leadId || f.kommoLeadId,
+        contratanteNome: d.nome || f.contratanteNome,
+        contato: d.contato || f.contato,
+        contratanteDoc: d.doc || f.contratanteDoc,
+        contratanteEndereco: d.endereco || f.contratanteEndereco,
+      }))
+      setCnpjMsg({ texto: 'Dados importados do Kommo. Confira antes de gerar.', erro: false })
+    } catch (e) {
+      setCnpjMsg({ texto: e?.message || 'Falha ao importar do Kommo.', erro: true })
+    } finally {
+      setImportandoKommo(false)
+    }
+  }
+
   // ----- Buscar dados do cliente pelo CNPJ (BrasilAPI, grátis, sem chave) -----
   async function buscarCnpj() {
     if (buscandoCnpj) return
@@ -393,6 +430,7 @@ export default function App() {
         formaPagamento: form.formaPagamento,
         foro: form.foroCidade,
         contratoTexto: doc.texto,
+        kommoLeadId: form.kommoLeadId,
         form,
         status: 'salvo',
       }
@@ -726,6 +764,14 @@ export default function App() {
 
               {mostrarCamposContrato && (
                 <div className="mt-4 grid gap-4">
+                  <button
+                    type="button"
+                    onClick={importarKommo}
+                    disabled={importandoKommo}
+                    className="flex items-center justify-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {importandoKommo ? 'Importando…' : '🔗 Importar dados do Kommo'}
+                  </button>
                   <Field label="Cliente (contratante) — nome completo / razão social">
                     <input className={inputCls} value={form.contratanteNome} onChange={set('contratanteNome')} placeholder="Nome do cliente ou empresa" />
                   </Field>
