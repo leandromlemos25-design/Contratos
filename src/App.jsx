@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { baixarPdf } from './pdfClient.js'
 import {
   CONTRATADO,
   MARCA,
@@ -49,6 +50,7 @@ export default function App() {
   const [doc, setDoc] = useState(null) // { tipo, com, ...dados } | null
   const [mostrarCamposContrato, setMostrarCamposContrato] = useState(false)
   const [copiado, setCopiado] = useState(false)
+  const [baixandoPdf, setBaixandoPdf] = useState(false)
   const [erroGerar, setErroGerar] = useState('')
   const [melhorandoCampo, setMelhorandoCampo] = useState(null) // nome do campo em edição pela IA
   const [iaErro, setIaErro] = useState(null) // { campo, texto } | null
@@ -223,6 +225,22 @@ export default function App() {
 
   function imprimir() {
     window.print()
+  }
+
+  // Baixa um PDF limpo (sem cabeçalho/rodapé do navegador), gerado pelo app.
+  async function baixarPDF() {
+    if (!doc || baixandoPdf) return
+    setBaixandoPdf(true)
+    try {
+      const cliente =
+        doc.tipo === 'contrato' ? form.contratanteNome : doc.cliente || form.cliente
+      const nome = `${doc.tipo === 'contrato' ? 'Contrato' : 'Proposta'} - ${cliente || 'documento'}`
+      await baixarPdf(textoPlano, nome)
+    } catch {
+      alert('Não foi possível gerar o PDF agora. Use o botão Imprimir como alternativa.')
+    } finally {
+      setBaixandoPdf(false)
+    }
   }
 
   // Copia o link de assinatura para colar no WhatsApp/Kommo (envio pelo seu número).
@@ -890,8 +908,11 @@ export default function App() {
                   <button onClick={copiar} className={btnGhost}>
                     {copiado ? '✓ Copiado' : 'Copiar'}
                   </button>
+                  <button onClick={baixarPDF} disabled={baixandoPdf} className={btnGhost}>
+                    {baixandoPdf ? 'Gerando…' : '⬇️ Baixar PDF'}
+                  </button>
                   <button onClick={imprimir} className={btnGhost}>
-                    Imprimir / PDF
+                    Imprimir
                   </button>
                 </div>
               </div>
